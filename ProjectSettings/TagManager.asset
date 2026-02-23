@@ -3,13 +3,12 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags:
-  - Logic
+  tags: []
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - Sub
+  - 
   - Water
   - UI
   - 
@@ -41,6 +40,24 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Ground
+    uniqueID: 2614103947
+    locked: 0
+  - name: WalkInFront
+    uniqueID: 4134762501
+    locked: 0
+  - name: Collision
+    uniqueID: 2384338761
+    locked: 0
+  - name: Player
+    uniqueID: 2035806843
+    locked: 0
+  - name: WalkBehind
+    uniqueID: 1281363789
+    locked: 0
+  - name: Decor
+    uniqueID: 804567809
     locked: 0
   m_RenderingLayers:
   - Default
