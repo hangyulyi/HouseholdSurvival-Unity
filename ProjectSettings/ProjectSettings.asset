@@ -775,11 +775,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: fc6c8285-4c8f-44d8-a9ca-85d5edda013a
+  cloudProjectId: aef63ce9-31f2-4245-a608-b5f655a35324
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: MiniGame
-  organizationId: cheesedingo69
+  projectName: FinalProject
+  organizationId: hangyulyi
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
