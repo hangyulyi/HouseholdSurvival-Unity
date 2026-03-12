@@ -8,6 +8,7 @@ public class FlagConfirmationPanel : MonoBehaviour
     public GameObject confirmPanel;
     public Image confirmationImage;
     public Image[] sourceFlagImages;
+    public string[] countryNames = { "USA", "Brazil", "Sweden", "India", "Kenya" };
 
     public CanvasGroup selectionCanvasGroup;
     public GameObject selectionMenu;
@@ -39,6 +40,11 @@ public class FlagConfirmationPanel : MonoBehaviour
     {
         string playerName = nameInputField.text;
         playerStatusUI.SetName(playerName);
+
+        // save country
+        string selectedCountry = countryNames[selectedFlagIndex];
+        GameController.Instance.SetCountry(selectedCountry);
+        
         confirmPanel.SetActive(false);
         selectionMenu.SetActive(false);
         playerStatusPanel.SetActive(true);
