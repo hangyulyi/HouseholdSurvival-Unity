@@ -21,14 +21,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (PauseController.IsGamePaused)
-        {
-            rb.linearVelocity = Vector2.zero;
-            animator.SetBool("isWalking", false);
-            return;
-        }
+
         // Click-to-Move Logic
-        if (Mouse.current.leftButton.wasPressedThisFrame && !PauseController.IsGamePaused)
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             Vector3 mousePos = Mouse.current.position.ReadValue();
             mousePos.z = Mathf.Abs(Camera.main.transform.position.z);

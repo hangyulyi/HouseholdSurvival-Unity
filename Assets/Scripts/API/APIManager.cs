@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
-using SimpleJSON;
+using System.Text;
 
 public class APIManager : MonoBehaviour
 {
@@ -30,7 +30,7 @@ public class APIManager : MonoBehaviour
     /*
         Manage Scenarios
      */
-    public IEnumerator LoadScenario(int scenarioId, System.Action<string,string,JSONArray> callback)
+    public IEnumerator LoadScenario(int scenarioId, string country, System.Action<string> callback)
     {
         string url = BASE_URL + "/api/scenarios/" + scenarioId;
 
@@ -40,28 +40,13 @@ public class APIManager : MonoBehaviour
 
         yield return req.SendWebRequest();
 
-        // Successful request
-        if (req.result == UnityWebRequest.Result.Success)
-        {
-            var data = JSON.Parse(req.downloadHandler.text);
-
-            string title = data["scenario"]["title"];
-            string description = data["scenario"]["description"];
-
-            JSONArray decisions = data["decisions"].AsArray;
-
-            callback(title, description, decisions);
-        }
-        else
-        {
-            Debug.LogError(req.downloadHandler.text);
-        }
+        callback(req.downloadHandler.text);
     }
 
     /*
         Store decisions
      */
-    public IEnumerator SubmitDecision(int decisionId, int scenarioId, System.Action<int, int, int, int> callback)
+    public IEnumerator SubmitDecision(int decisionId, int scenarioId)
     {
         string json = $"{{\"decision_id\":{decisionId},\"scenario_id\":{scenarioId}}}";
         byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
@@ -76,22 +61,7 @@ public class APIManager : MonoBehaviour
 
         yield return req.SendWebRequest();
 
-        if (req.result == UnityWebRequest.Result.Success)
-        {
-            var data = JSON.Parse (req.downloadHandler.text);
-            var decision = data["chosen_decision"];
-
-            int impact = decision["impact_score"].AsInt;
-            int economic = decision["economic_score"].AsInt;
-            int social = decision["social_score"].AsInt;
-            int environment = decision["environmental_score"].AsInt;
-
-            callback(impact, economic, social, environment);
-        }
-        else
-        {
-            Debug.LogError(req.downloadHandler.text);
-        }
+        Debug.Log(req.downloadHandler.text);
     }
 
 

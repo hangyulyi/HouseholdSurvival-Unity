@@ -24,5 +24,15 @@ public class LogicManagerScript : MonoBehaviour
     {
         finalScore.text = "<sprite=0>Collected:  " + playerScore.ToString();
         gameOverSceen.SetActive(true);
+
+        // convert score to money
+        int moneyEarned = playerScore * 5;
+
+        GameManager.Instance.AddMoney(moneyEarned);
+    }
+
+    public void returnToMainGame()
+    {
+        SceneManager.LoadScene("Main");
     }
 }
