@@ -39,6 +39,6 @@ public class ScenarioManager : MonoBehaviour
 
         GameManager.Instance.NextPhase();
 
-        MapManager.Instance.UpdateMap();
+        // MapManager.Instance.UpdateMap();
     }
 }
