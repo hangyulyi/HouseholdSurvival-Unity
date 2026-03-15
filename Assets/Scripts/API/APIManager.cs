@@ -3,18 +3,25 @@ using System.Collections;
 using UnityEngine.Networking;
 using System.Text;
 
+/// <summary>
+/// Singleton HTTP client for the Household Survival backend.
+/// React handles login and stores the JWT + userId in PlayerPrefs before loading the Unity scene.
+/// Expected PlayerPrefs keys:  "token"  (JWT string)
+///                              "userId" (int as string)
+/// </summary>
 public class APIManager : MonoBehaviour
 {
     public static APIManager Instance;
 
-    // update when deployed
-    private string BASE_URL = "https://localhost:4000";
+    // ?? Change to your deployed URL when hosting the backend ??
+    [SerializeField] private string baseUrl = "http://localhost:3000";
 
     void Awake()
     {
-        if(Instance == null)
+        if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -22,47 +29,181 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    string GetToken()
+    // ?? Auth helpers ?????????????????????????????????????????????????????????
+
+    private string GetToken() => PlayerPrefs.GetString("token", "");
+
+    private UnityWebRequest AuthorizedGet(string url)
     {
-        return PlayerPrefs.GetString("token", "");
-    }
-
-    /*
-        Manage Scenarios
-     */
-    public IEnumerator LoadScenario(int scenarioId, string country, System.Action<string> callback)
-    {
-        string url = BASE_URL + "/api/scenarios/" + scenarioId;
-
-        UnityWebRequest req = UnityWebRequest.Get(url);
-
+        var req = UnityWebRequest.Get(url);
         req.SetRequestHeader("Authorization", "Bearer " + GetToken());
-
-        yield return req.SendWebRequest();
-
-        callback(req.downloadHandler.text);
+        return req;
     }
 
-    /*
-        Store decisions
-     */
-    public IEnumerator SubmitDecision(int decisionId, int scenarioId)
+    private UnityWebRequest AuthorizedPost(string url, string json)
     {
-        string json = $"{{\"decision_id\":{decisionId},\"scenario_id\":{scenarioId}}}";
-        byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
-
-        UnityWebRequest req = new UnityWebRequest(BASE_URL + "/api/decisions/submit", "POST");
-
+        byte[] body = Encoding.UTF8.GetBytes(json);
+        var req = new UnityWebRequest(url, "POST");
         req.uploadHandler = new UploadHandlerRaw(body);
         req.downloadHandler = new DownloadHandlerBuffer();
-
         req.SetRequestHeader("Content-Type", "application/json");
         req.SetRequestHeader("Authorization", "Bearer " + GetToken());
-
-        yield return req.SendWebRequest();
-
-        Debug.Log(req.downloadHandler.text);
+        return req;
     }
 
+    // ????????????????????????????????????????????????????????????????????????
+    // COUNTRIES
+    // ????????????????????????????????????????????????????????????????????????
 
+    /// <summary>GET /api/countries — no auth required, returns CountriesResponse</summary>
+    public IEnumerator GetAllCountries(System.Action<string> callback)
+    {
+        using var req = UnityWebRequest.Get(baseUrl + "/api/countries");
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("GetAllCountries failed: " + req.error);
+    }
+
+    /// <summary>GET /api/countries/:code — returns country data + its events</summary>
+    public IEnumerator GetCountry(string countryCode, System.Action<string> callback)
+    {
+        using var req = UnityWebRequest.Get(baseUrl + "/api/countries/" + countryCode);
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("GetCountry failed: " + req.error);
+    }
+
+    /// <summary>GET /api/countries/:code/events/:phase</summary>
+    public IEnumerator GetCountryEvent(string countryCode, int phase, System.Action<string> callback)
+    {
+        string url = $"{baseUrl}/api/countries/{countryCode}/events/{phase}";
+        using var req = UnityWebRequest.Get(url);
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("GetCountryEvent failed: " + req.error);
+    }
+
+    // ????????????????????????????????????????????????????????????????????????
+    // SESSIONS
+    // ????????????????????????????????????????????????????????????????????????
+
+    /// <summary>
+    /// POST /api/sessions/start
+    /// Call this when the player confirms their country selection.
+    /// Returns a SessionStartResponse containing session info + country starting stats.
+    /// </summary>
+    public IEnumerator StartSession(string countryCode, string characterName, System.Action<string> callback)
+    {
+        string json = $"{{\"country_code\":\"{countryCode}\",\"character_name\":\"{characterName}\"}}";
+        using var req = AuthorizedPost(baseUrl + "/api/sessions/start", json);
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("StartSession failed: " + req.error + "\n" + req.downloadHandler.text);
+    }
+
+    // ????????????????????????????????????????????????????????????????????????
+    // SCENARIOS
+    // ????????????????????????????????????????????????????????????????????????
+
+    /// <summary>
+    /// GET /api/scenarios/:id?country=code
+    /// scenarioId matches phase number (phase 1 = scenario_id 1, etc.)
+    /// Returns ScenarioResponse with scenario, decisions, and optional country_event.
+    /// Requires auth token.
+    /// </summary>
+    public IEnumerator LoadScenario(int scenarioId, string countryCode, System.Action<string> callback)
+    {
+        string url = $"{baseUrl}/api/scenarios/{scenarioId}?country={countryCode}";
+        using var req = AuthorizedGet(url);
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("LoadScenario failed: " + req.error + "\n" + req.downloadHandler.text);
+    }
+
+    // ????????????????????????????????????????????????????????????????????????
+    // DECISIONS
+    // ????????????????????????????????????????????????????????????????????????
+
+    /// <summary>
+    /// POST /api/decisions/submit
+    /// Submits a scenario decision and returns adjusted scores + optional final outcome.
+    /// </summary>
+    public IEnumerator SubmitDecision(int decisionId, int scenarioId, string countryCode,
+                                      System.Action<string> callback)
+    {
+        string json = $"{{\"decision_id\":{decisionId},\"scenario_id\":{scenarioId},\"country_code\":\"{countryCode}\"}}";
+        using var req = AuthorizedPost(baseUrl + "/api/decisions/submit", json);
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("SubmitDecision failed: " + req.error + "\n" + req.downloadHandler.text);
+    }
+
+    /// <summary>
+    /// POST /api/decisions/submit-event
+    /// Submits a country-specific event choice (a / b / c).
+    /// </summary>
+    public IEnumerator SubmitEventDecision(int eventId, string chosenChoice, string countryCode,
+                                           System.Action<string> callback)
+    {
+        string json = $"{{\"event_id\":{eventId},\"chosen_choice\":\"{chosenChoice}\",\"country_code\":\"{countryCode}\"}}";
+        using var req = AuthorizedPost(baseUrl + "/api/decisions/submit-event", json);
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("SubmitEventDecision failed: " + req.error + "\n" + req.downloadHandler.text);
+    }
+
+    // ????????????????????????????????????????????????????????????????????????
+    // PROGRESS
+    // ????????????????????????????????????????????????????????????????????????
+
+    /// <summary>GET /api/progress — returns all phase progress for this player</summary>
+    public IEnumerator GetProgress(System.Action<string> callback)
+    {
+        using var req = AuthorizedGet(baseUrl + "/api/progress");
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("GetProgress failed: " + req.error);
+    }
+
+    /// <summary>GET /api/progress/leaderboard?country=code</summary>
+    public IEnumerator GetLeaderboard(string countryCode, System.Action<string> callback)
+    {
+        string url = baseUrl + "/api/progress/leaderboard";
+        if (!string.IsNullOrEmpty(countryCode))
+            url += "?country=" + countryCode;
+
+        using var req = AuthorizedGet(url);
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("GetLeaderboard failed: " + req.error);
+    }
+
+    /// <summary>POST /api/progress/reset — wipes all progress for this player</summary>
+    public IEnumerator ResetProgress(System.Action callback)
+    {
+        using var req = AuthorizedPost(baseUrl + "/api/progress/reset", "{}");
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback?.Invoke();
+        else
+            Debug.LogError("ResetProgress failed: " + req.error);
+    }
 }

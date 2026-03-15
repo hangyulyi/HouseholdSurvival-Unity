@@ -1,7 +1,15 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
+/// <summary>
+/// Handles the country selection screen.
+/// On Start it fetches all country data from GET /api/countries (public, no auth needed)
+/// and uses the real intro_text and difficulty_label from the database for each blurb.
+/// Each country has a fixed character — the player does not enter their own name.
+/// On ConfirmSelection it calls POST /api/sessions/start to initialise the session.
+/// </summary>
 public class CountrySelectionController : MonoBehaviour
 {
     [Header("Flag Buttons")]
@@ -24,155 +32,156 @@ public class CountrySelectionController : MonoBehaviour
     public GameObject kenyaMap;
     public GameObject swedenMap;
     public GameObject usaMap;
-    
 
     [Header("Blurb")]
     public TMP_Text countryName;
     public TMP_Text countryBlurb;
+    public TMP_Text difficultyText;
 
     [Header("Confirm Panel")]
     public GameObject confirmPanel;
     public Image selectedFlagImage;
-    public TMP_InputField nameInput;
+    public TMP_Text characterNameText; // displays e.g. "Playing as: Lucas"
+
+    [Header("Loading / Error")]
+    public GameObject loadingOverlay;
+    public TMP_Text errorText;
 
     [Header("Player Status")]
     public PlayerStatusUI playerStatusUI;
     public GameObject playerStatusCanvas;
 
-    string selectedCountry;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+    private static readonly Dictionary<string, string> CharacterNames = new()
+    {
+        { "br", "Lucas"  },
+        { "in", "Arjun"  },
+        { "ke", "James"  },
+        { "se", "Erik"   },
+        { "us", "Thomas" },
+    };
+
+    // ── Internal state ────────────────────────────────────────────────────────
+    private string _selectedCountry = "Brazil";
+
+    /// <summary>Keyed by backend country_code (br / in / ke / se / us).</summary>
+    private Dictionary<string, CountryData> _countryDataByCode = new();
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    void Awake()
+    {
+        if (GameManager.Instance == null) return;
+
+        // If country was already chosen (e.g. returning from minigame), skip straight to map
+        if (!string.IsNullOrEmpty(GameManager.Instance.countryCode))
+        {
+            gameObject.SetActive(false);
+            playerStatusCanvas.SetActive(true);
+            playerStatusUI.Refresh();
+            ActivateMap(GameManager.Instance.countryCode);
+        }
+    }
+
     void Start()
     {
-        // init selected
+        if (loadingOverlay) loadingOverlay.SetActive(true);
+        if (errorText) errorText.text = "";
+
+        // Public route — no auth token required
+        StartCoroutine(APIManager.Instance.GetAllCountries(OnCountriesLoaded));
+    }
+
+    // ── Country data from backend ─────────────────────────────────────────────
+
+    private void OnCountriesLoaded(string json)
+    {
+        if (loadingOverlay) loadingOverlay.SetActive(false);
+
+        try
+        {
+            var response = JsonUtility.FromJson<CountriesResponse>(json);
+            if (response?.countries != null)
+                foreach (var c in response.countries)
+                    _countryDataByCode[c.country_code] = c;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("CountrySelectionController: could not load country data — " +
+                             "falling back to placeholder text.\n" + e.Message);
+        }
+
         SelectCountry("Brazil");
     }
 
+    // ── Country selection ─────────────────────────────────────────────────────
+
     public void SelectCountry(string country)
     {
-        selectedCountry = country;
+        _selectedCountry = country;
 
         Color selected = Color.white;
-        Color grey = Color.grey;
+        Color grey = new Color(0.55f, 0.55f, 0.55f);
 
-        // Init as grey
         brazilImage.color = grey;
         indiaImage.color = grey;
         kenyaImage.color = grey;
         swedenImage.color = grey;
         usaImage.color = grey;
-    
-        if(country == "Brazil")
+
+        string code = GameManager.NameToCode(country);
+
+        if (_countryDataByCode.TryGetValue(code, out CountryData data))
         {
-            brazilImage.color = selected;
-            countryName.text = "Brazil";
-            countryBlurb.text = "In Brazil's urban environments, financial stability can be unpredictable." +
-                "Inflation, job instability and economic fluctuations affect daily life. Strong family and community ties often help through challenges\n\n\n" +
-                "System Type: Volatile Economy\n\n" +
-                "Safety Net: Low-medium\n\n" +
-                "Difficulty: Medium-hard";
+            countryName.text = data.country_name;
+            countryBlurb.text = data.intro_text;
+
+            if (difficultyText)
+                difficultyText.text = "Difficulty: " + data.difficulty_label;
+            else
+                countryBlurb.text += $"\n\nDifficulty: {data.difficulty_label}";
+        }
+        else
+        {
+            countryName.text = country;
+            countryBlurb.text = "Loading country information…";
+            if (difficultyText) difficultyText.text = "";
         }
 
-        if (country == "India")
+        // Highlight the selected flag
+        switch (country)
         {
-            indiaImage.color = selected;
-            countryName.text = "India";
-            countryBlurb.text = "In urban India, income often supports more than just yourself. Many workers contribute financially to parents or extended family." +
-                "Healthcare can be affordable but varies in quailty and education can improve opportunities if you can afford the time and fees\n\n\n" +
-                "System Type: Family-Responsibility Economy\n\n" +
-                "Safety Net: Low\n\n" +
-                "Difficulty: Medium";
-        }
-
-        if (country == "Kenya")
-        {
-            kenyaImage.color = selected;
-            countryName.text = "Kenya";
-            countryBlurb.text = "Many people in Kenya rely on informal work and community networks rather than stable employment." +
-                "Income can fluctuate and access to healthcare and education may be limited\n\n\n" +
-                "System Type: Informal Economy\n\n" +
-                "Safety Net: Very low\n\n" +
-                "Difficulty: Hard";
-        }
-
-        if (country == "Sweden")
-        {
-            swedenImage.color = selected;
-            countryName.text = "Sweden";
-            countryBlurb.text = "Sweden provides strong social support systems such as healthcare, unemployment benefits and education assistance." +
-                "While taxes are higher, government programs help protect citizens from extreme financial crisis\n\n\n" +
-                "System Type: Welfare State\n\n" +
-                "Safety Net: High\n\n" +
-                "Difficulty: Easier";
-        }
-
-        if (country == "USA")
-        {
-            usaImage.color = selected;
-            countryName.text = "United States of America";
-            countryBlurb.text = "Life in the US offers opportunity but basic needs can be expensive. Healthcare, housing and education costs create constant financial pressure." +
-                "While career growth and training can lead to higher income, one medical emergency or job loss can quickly lead to debt\n\n\n" +
-                "System Type: Working-Poor Economy\n\n" +
-                "Safety Net: Low\n\n" +
-                "Difficulty: Medium";
+            case "Brazil": brazilImage.color = selected; break;
+            case "India": indiaImage.color = selected; break;
+            case "Kenya": kenyaImage.color = selected; break;
+            case "Sweden": swedenImage.color = selected; break;
+            case "USA": usaImage.color = selected; break;
         }
     }
+
+    // ── Confirm panel ─────────────────────────────────────────────────────────
 
     public void ShowConfirmPanel()
     {
         confirmPanel.SetActive(true);
 
-        if (selectedCountry == "Brazil")
-            selectedFlagImage.sprite = brazilImage.sprite;
-
-        if (selectedCountry == "India")
-            selectedFlagImage.sprite = indiaImage.sprite;
-
-        if (selectedCountry == "Kenya")
-            selectedFlagImage.sprite = kenyaImage.sprite;
-
-        if (selectedCountry == "Sweden")
-            selectedFlagImage.sprite = swedenImage.sprite;
-
-        if (selectedCountry == "USA")
-            selectedFlagImage.sprite = usaImage.sprite;
-    }
-
-    public void ConfirmSelection()
-    {
-        GameManager.Instance.country = selectedCountry;
-        GameManager.Instance.playerName = nameInput.text;
-
-        // save state
-
-        //PlayerPrefs.SetInt("HasSelectedCountry", 1);
-        //PlayerPrefs.SetString("PlayerName", nameInput.text);
-        // PlayerPrefs.Save();
-
-        ActivateMap(selectedCountry);
-
-        playerStatusUI.SetName(nameInput.text);
-        playerStatusCanvas.SetActive(true);
-
-        confirmPanel.SetActive(false);
-
-        gameObject.SetActive(false);
-    }
-
-    public void ActivateMap(string country)
-    {
-        brazilMap.SetActive(false);
-        indiaMap.SetActive(false);
-        kenyaMap.SetActive(false);
-        swedenMap.SetActive(false);
-        usaMap.SetActive(false);
-
-        switch (country)
+        // Show the flag sprite
+        selectedFlagImage.sprite = _selectedCountry switch
         {
-            case "Brazil": brazilMap.SetActive(true); break;
-            case "India": indiaMap.SetActive(true); break;
-            case "Kenya": kenyaMap.SetActive(true); break;
-            case "Sweden": swedenMap.SetActive(true); break;
-            case "USA": usaMap.SetActive(true); break;
+            "Brazil" => brazilImage.sprite,
+            "India" => indiaImage.sprite,
+            "Kenya" => kenyaImage.sprite,
+            "Sweden" => swedenImage.sprite,
+            "USA" => usaImage.sprite,
+            _ => selectedFlagImage.sprite
+        };
+
+        // Show the fixed character name for this country
+        string code = GameManager.NameToCode(_selectedCountry);
+        if (characterNameText)
+        {
+            string name = CharacterNames.TryGetValue(code, out var n) ? n : "Unknown";
+            characterNameText.text = "Playing as: " + name;
         }
     }
 
@@ -181,31 +190,76 @@ public class CountrySelectionController : MonoBehaviour
         confirmPanel.SetActive(false);
     }
 
-    void Awake()
+    /// <summary>
+    /// Confirms the country choice. Uses the fixed character name for the selected country
+    /// rather than a player-entered name.
+    /// Requires a valid JWT in PlayerPrefs["token"] — set by React login, or DevAuthHelper in the Editor.
+    /// </summary>
+    public void ConfirmSelection()
     {
-        // check if game has already started
-        // 1 = true, 0 = false (default)
-        //if(PlayerPrefs.GetInt("HasSelectedCountry", 0) == 1)
-        //{
-        //    playerStatusCanvas.SetActive(true);
+        string code = GameManager.NameToCode(_selectedCountry);
 
-        //    //string savedName = PlayerPrefs.GetString("PlayerName", "Player");
-        //    //playerStatusUI.SetName(savedName);
+        // Look up the fixed character name for this country
+        string characterName = CharacterNames.TryGetValue(code, out var n) ? n : "Player";
+        GameManager.Instance.playerName = characterName;
 
-        //    playerStatusUI.SetName(GameManager.Instance.playerName);
+        if (loadingOverlay) loadingOverlay.SetActive(true);
+        if (errorText) errorText.text = "";
 
-        //    gameObject.SetActive(false);
-        //}
-        if (GameManager.Instance == null) return;
+        StartCoroutine(APIManager.Instance.StartSession(code, characterName, OnSessionStarted));
+    }
 
-        if (!string.IsNullOrEmpty(GameManager.Instance.country))
+    private void OnSessionStarted(string json)
+    {
+        if (loadingOverlay) loadingOverlay.SetActive(false);
+
+        SessionStartResponse response;
+        try
         {
-            gameObject.SetActive(false);
+            response = JsonUtility.FromJson<SessionStartResponse>(json);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Failed to parse session response: " + e.Message + "\n" + json);
+            if (errorText) errorText.text = "Failed to connect to server. Please try again.";
+            return;
+        }
 
-            playerStatusCanvas.SetActive(true);
-            playerStatusUI.SetName(GameManager.Instance.playerName);
+        if (response == null || response.session == null)
+        {
+            Debug.LogError("Session response was null.\n" + json);
+            if (errorText) errorText.text = "Server error. Please try again.";
+            return;
+        }
 
-            ActivateMap(GameManager.Instance.country);
+        GameManager.Instance.InitialiseFromCountryConfig(response.country_config, response.session);
+
+        confirmPanel.SetActive(false);
+        gameObject.SetActive(false);
+
+        playerStatusUI.Refresh();
+        playerStatusCanvas.SetActive(true);
+
+        ActivateMap(response.country_config.country_code);
+    }
+
+    // ── Map helpers ───────────────────────────────────────────────────────────
+
+    public void ActivateMap(string code)
+    {
+        brazilMap.SetActive(false);
+        indiaMap.SetActive(false);
+        kenyaMap.SetActive(false);
+        swedenMap.SetActive(false);
+        usaMap.SetActive(false);
+
+        switch (code)
+        {
+            case "br": case "Brazil": brazilMap.SetActive(true); break;
+            case "in": case "India": indiaMap.SetActive(true); break;
+            case "ke": case "Kenya": kenyaMap.SetActive(true); break;
+            case "se": case "Sweden": swedenMap.SetActive(true); break;
+            case "us": case "USA": usaMap.SetActive(true); break;
         }
     }
 }

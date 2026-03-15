@@ -10,7 +10,7 @@ public class CountrySelector : MonoBehaviour
 
     public void SelectCountry(string country)
     {
-        GameManager.Instance.country = country;
+        //GameManager.Instance.country = country;
 
         brFlag.SetActive(country == "Brazil");
         inFlag.SetActive(country == "India");
