@@ -40,6 +40,11 @@ public class GameManager : MonoBehaviour
     // ── Final outcome ─────────────────────────────────────────────────────────
     public string finalOutcome = "";
 
+    // ── Phase 2: step-3 decisions saved across the minigame scene load ────────
+    // ScenarioManager stores these here before loading the Minigame scene.
+    // On return, ScenarioManager.Start() picks them up and shows them.
+    [HideInInspector] public DecisionData[] pendingPhase2Step3 = null;
+
     // ── UI event ──────────────────────────────────────────────────────────────
     public UnityEvent onStatsChanged = new UnityEvent();
 
@@ -179,6 +184,7 @@ public class GameManager : MonoBehaviour
         money = 0; health = 70; stress = 30; happiness = 60; debt = 0;
         economicScore = socialScore = healthScore = environmentalScore = totalImpactScore = 0;
         finalOutcome = "";
+        pendingPhase2Step3 = null;
         UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
     }
 }

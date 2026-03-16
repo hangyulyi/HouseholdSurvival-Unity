@@ -2,18 +2,16 @@
 using TMPro;
 using UnityEngine.UI;
 using System.Collections;
+using System.Linq;
 
 /// <summary>
 /// Handles all scenario phases:
-///   Phases 1–5 — fetch scenario, show decision buttons, submit choice, then show country event
-///   Phase 6     — show a KPI reflection dashboard; one "Continue" button auto-submits the single decision
-///   Phase 7     — auto-submits immediately; backend resolves the ending from total score
-///
-/// UI panels needed in the scene:
-///   scenarioCanvas   — phases 1–5 choices
-///   reflectionCanvas — phase 6 KPI dashboard
-///   eventCanvas      — country-specific events
-///   outcomeCanvas    — phase 7 final result
+///   Phase 2  — two-step flow: Step 1 (take job / decline / use savings),
+///               then Step 3 (spend earnings). If Step 1 triggers the minigame,
+///               Step 3 decisions are saved to GameManager and shown on return.
+///   Phases 1, 3–5 — normal: show decisions, submit, show country event, advance
+///   Phase 6  — KPI reflection dashboard with a Continue button
+///   Phase 7  — auto-resolves from total score; no player choice
 /// </summary>
 public class ScenarioManager : MonoBehaviour
 {
@@ -33,7 +31,6 @@ public class ScenarioManager : MonoBehaviour
     public GameObject reflectionCanvas;
     public TMP_Text reflectionTitleText;
     public TMP_Text reflectionDescriptionText;
-    // KPI stat fields — wire these to TMP_Text elements in your dashboard
     public TMP_Text kpiMoneyText;
     public TMP_Text kpiHealthText;
     public TMP_Text kpiStressText;
@@ -43,7 +40,6 @@ public class ScenarioManager : MonoBehaviour
     public TMP_Text kpiSocialScoreText;
     public TMP_Text kpiHealthScoreText;
     public TMP_Text kpiTotalScoreText;
-    // The single button on the reflection panel
     public Button reflectionContinueButton;
 
     // ── Country event panel ───────────────────────────────────────────────────
@@ -62,11 +58,17 @@ public class ScenarioManager : MonoBehaviour
     [Header("Final Outcome Panel (Phase 7)")]
     public GameObject outcomeCanvas;
     public TMP_Text outcomeText;
-    public TMP_Text outcomeTotalScoreText;  // optional — shows final score alongside outcome
+    public TMP_Text outcomeTotalScoreText;
+    public Button replayButton;
 
-    // ── Loading overlay ───────────────────────────────────────────────────────
+    // ── Loading ───────────────────────────────────────────────────────────────
     [Header("Loading")]
     public GameObject loadingOverlay;
+
+    // ── Phase 2 constants ─────────────────────────────────────────────────────
+    // The schema seeds exactly 3 step-1 decisions for phase 2 (one is the minigame
+    // trigger). Everything after those 3 is the step-3 "spend the earnings" set.
+    private const int PHASE2_STEP1_COUNT = 3;
 
     // ── Internal state ────────────────────────────────────────────────────────
     private ScenarioResponse _currentResponse;
@@ -78,6 +80,18 @@ public class ScenarioManager : MonoBehaviour
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+    }
+
+    void Start()
+    {
+        // If we just returned from the minigame, show the step-3 decisions
+        if (GameManager.Instance != null &&
+            GameManager.Instance.pendingPhase2Step3 != null &&
+            GameManager.Instance.pendingPhase2Step3.Length > 0)
+        {
+            ShowPhase2Step3(GameManager.Instance.pendingPhase2Step3);
+            GameManager.Instance.pendingPhase2Step3 = null;
+        }
     }
 
     // ── Public entry point ────────────────────────────────────────────────────
@@ -125,12 +139,13 @@ public class ScenarioManager : MonoBehaviour
 
         int phase = _currentResponse.scenario.phase_number;
 
-        if (phase == 6) ShowReflectionPanel(_currentResponse);
+        if (phase == 2) DisplayPhase2Step1(_currentResponse);
+        else if (phase == 6) ShowReflectionPanel(_currentResponse);
         else if (phase == 7) AutoSubmitPhase7(_currentResponse);
         else DisplayScenario(_currentResponse);
     }
 
-    // ── Phases 1–5: normal scenario ──────────────────────────────────────────
+    // ── Standard scenario display (phases 1, 3, 4, 5) ────────────────────────
 
     private void DisplayScenario(ScenarioResponse data)
     {
@@ -138,26 +153,13 @@ public class ScenarioManager : MonoBehaviour
         descriptionText.text = data.scenario.description;
         if (sdgText) sdgText.text = data.scenario.sdg_goal ?? "";
 
-        foreach (Transform child in buttonContainer)
-            Destroy(child.gameObject);
-
-        if (data.decisions != null)
-        {
-            foreach (var decision in data.decisions)
-            {
-                var btn = Instantiate(decisionButtonPrefab, buttonContainer);
-                var label = btn.GetComponentInChildren<TMP_Text>();
-                if (label) label.text = decision.choice_text;
-
-                var captured = decision;
-                btn.GetComponent<Button>().onClick.AddListener(() => OnDecisionChosen(captured));
-            }
-        }
+        SpawnDecisionButtons(data.decisions,
+            decision => OnDecisionChosen(decision, isPhase2Step1: false));
 
         scenarioCanvas.SetActive(true);
     }
 
-    private void OnDecisionChosen(DecisionData decision)
+    private void OnDecisionChosen(DecisionData decision, bool isPhase2Step1)
     {
         scenarioCanvas.SetActive(false);
         if (loadingOverlay) loadingOverlay.SetActive(true);
@@ -167,12 +169,11 @@ public class ScenarioManager : MonoBehaviour
                 decision.decision_id,
                 decision.scenario_id,
                 GameManager.Instance.countryCode,
-                OnDecisionSubmitted
+                isPhase2Step1
+                    ? (System.Action<string>)(json => OnPhase2Step1Submitted(json, decision))
+                    : OnDecisionSubmitted
             )
         );
-
-        if (decision.is_minigame_trigger)
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Minigame");
     }
 
     private void OnDecisionSubmitted(string json)
@@ -196,7 +197,6 @@ public class ScenarioManager : MonoBehaviour
             return;
         }
 
-        // Show country event if the backend included one for this phase
         if (_currentResponse?.country_event != null &&
             !string.IsNullOrEmpty(_currentResponse.country_event.event_title))
         {
@@ -209,23 +209,145 @@ public class ScenarioManager : MonoBehaviour
         }
     }
 
-    // ── Phase 6: Reflection / KPI dashboard ──────────────────────────────────
+    // ── Phase 2: Step 1 (take job / decline / use savings) ───────────────────
+
+    private void DisplayPhase2Step1(ScenarioResponse data)
+    {
+        titleText.text = data.scenario.title;
+        descriptionText.text = data.scenario.description;
+        if (sdgText) sdgText.text = data.scenario.sdg_goal ?? "";
+
+        // Step 1 = first PHASE2_STEP1_COUNT decisions
+        // Step 3 = the rest (stored for later)
+        var allDecisions = data.decisions ?? new DecisionData[0];
+
+        var step1 = allDecisions.Length > PHASE2_STEP1_COUNT
+            ? allDecisions[..PHASE2_STEP1_COUNT]
+            : allDecisions;
+
+        SpawnDecisionButtons(step1,
+            decision => OnDecisionChosen(decision, isPhase2Step1: true));
+
+        scenarioCanvas.SetActive(true);
+    }
+
+    private void OnPhase2Step1Submitted(string json, DecisionData chosenDecision)
+    {
+        if (loadingOverlay) loadingOverlay.SetActive(false);
+
+        DecisionSubmitResponse response;
+        try { response = JsonUtility.FromJson<DecisionSubmitResponse>(json); }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Phase 2 step 1 parse error: " + e.Message);
+            return;
+        }
+
+        GameManager.Instance.ApplyAdjustedScores(response.adjusted_scores);
+
+        // Extract the step-3 decisions from the cached response
+        var allDecisions = _currentResponse.decisions ?? new DecisionData[0];
+        var step3Decisions = allDecisions.Length > PHASE2_STEP1_COUNT
+            ? allDecisions[PHASE2_STEP1_COUNT..]
+            : new DecisionData[0];
+
+        if (chosenDecision.is_minigame_trigger)
+        {
+            // ── Player took the side job — run the minigame as "step 2" ──────
+            // Save step-3 decisions in GameManager (DontDestroyOnLoad) so they
+            // survive the scene load and show when the player returns.
+            GameManager.Instance.pendingPhase2Step3 = step3Decisions;
+
+            Debug.Log("Phase 2: minigame triggered. Step 3 decisions saved for after minigame.");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Minigame");
+        }
+        else
+        {
+            // ── Player declined or used savings — skip minigame, go to step 3 ──
+            ShowPhase2Step3(step3Decisions);
+        }
+    }
+
+    // ── Phase 2: Step 3 (spend the earnings) ─────────────────────────────────
+
+    private void ShowPhase2Step3(DecisionData[] step3Decisions)
+    {
+        if (step3Decisions == null || step3Decisions.Length == 0)
+        {
+            // No step 3 (edge case) — just advance
+            AfterPhase2Complete();
+            return;
+        }
+
+        titleText.text = "Phase 2: How will you use the money?";
+        descriptionText.text = "Decide how to allocate what you earned (or saved).";
+        if (sdgText) sdgText.text = "SDG 1 – No Poverty";
+
+        SpawnDecisionButtons(step3Decisions, OnPhase2Step3Chosen);
+
+        scenarioCanvas.SetActive(true);
+    }
+
+    private void OnPhase2Step3Chosen(DecisionData decision)
+    {
+        scenarioCanvas.SetActive(false);
+        if (loadingOverlay) loadingOverlay.SetActive(true);
+
+        StartCoroutine(
+            APIManager.Instance.SubmitDecision(
+                decision.decision_id,
+                decision.scenario_id,
+                GameManager.Instance.countryCode,
+                OnPhase2Step3Submitted
+            )
+        );
+    }
+
+    private void OnPhase2Step3Submitted(string json)
+    {
+        if (loadingOverlay) loadingOverlay.SetActive(false);
+
+        DecisionSubmitResponse response;
+        try { response = JsonUtility.FromJson<DecisionSubmitResponse>(json); }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Phase 2 step 3 parse error: " + e.Message);
+            return;
+        }
+
+        GameManager.Instance.ApplyAdjustedScores(response.adjusted_scores);
+        AfterPhase2Complete();
+    }
+
+    private void AfterPhase2Complete()
+    {
+        // Show the country event for phase 2 if there is one, then advance
+        if (_currentResponse?.country_event != null &&
+            !string.IsNullOrEmpty(_currentResponse.country_event.event_title))
+        {
+            _pendingEvent = _currentResponse.country_event;
+            ShowCountryEvent(_pendingEvent);
+        }
+        else
+        {
+            AdvancePhase();
+        }
+    }
+
+    // ── Phase 6: Reflection dashboard ────────────────────────────────────────
 
     private void ShowReflectionPanel(ScenarioResponse data)
     {
         if (reflectionCanvas == null)
         {
-            Debug.LogWarning("ScenarioManager: reflectionCanvas not assigned — " +
-                             "auto-continuing phase 6.");
+            Debug.LogWarning("ScenarioManager: reflectionCanvas not assigned — auto-continuing.");
             AutoSubmitReflection(data);
             return;
         }
 
-        // Header
         if (reflectionTitleText) reflectionTitleText.text = data.scenario.title;
         if (reflectionDescriptionText) reflectionDescriptionText.text = data.scenario.description;
 
-        // KPI stats — use FormatMoney for anything money-related
         var gm = GameManager.Instance;
         if (kpiMoneyText) kpiMoneyText.text = "Money: " + gm.FormatMoney(gm.money);
         if (kpiDebtText) kpiDebtText.text = "Debt: " + gm.FormatMoney(gm.debt);
@@ -237,7 +359,6 @@ public class ScenarioManager : MonoBehaviour
         if (kpiHealthScoreText) kpiHealthScoreText.text = "Health Score: " + gm.healthScore;
         if (kpiTotalScoreText) kpiTotalScoreText.text = "Total Score: " + gm.totalImpactScore;
 
-        // Wire the Continue button
         if (reflectionContinueButton != null)
         {
             reflectionContinueButton.onClick.RemoveAllListeners();
@@ -252,61 +373,39 @@ public class ScenarioManager : MonoBehaviour
         if (reflectionCanvas) reflectionCanvas.SetActive(false);
         if (loadingOverlay) loadingOverlay.SetActive(true);
 
-        // Phase 6 has exactly one decision: "Review KPI dashboard"
         var decision = data.decisions != null && data.decisions.Length > 0
-            ? data.decisions[0]
-            : null;
+            ? data.decisions[0] : null;
 
-        if (decision == null)
-        {
-            Debug.LogWarning("ScenarioManager: no decision found for phase 6 — skipping submit.");
-            AdvancePhase();
-            return;
-        }
+        if (decision == null) { AdvancePhase(); return; }
 
         StartCoroutine(
             APIManager.Instance.SubmitDecision(
-                decision.decision_id,
-                decision.scenario_id,
+                decision.decision_id, decision.scenario_id,
                 GameManager.Instance.countryCode,
-                OnReflectionSubmitted
+                _ => { if (loadingOverlay) loadingOverlay.SetActive(false); AdvancePhase(); }
             )
         );
     }
 
-    private void OnReflectionSubmitted(string json)
-    {
-        if (loadingOverlay) loadingOverlay.SetActive(false);
-        // Phase 6 scores are all 0 — nothing to apply, just advance
-        AdvancePhase();
-    }
-
     // ── Phase 7: auto-resolve ─────────────────────────────────────────────────
 
-    /// <summary>
-    /// Phase 7 has no player choice — the backend resolves the ending from total score.
-    /// We submit the first decision in the list (doesn't matter which) and the server
-    /// returns final_outcome based on the score thresholds for the player's country.
-    /// </summary>
     private void AutoSubmitPhase7(ScenarioResponse data)
     {
         if (loadingOverlay) loadingOverlay.SetActive(true);
 
         var decision = data.decisions != null && data.decisions.Length > 0
-            ? data.decisions[0]
-            : null;
+            ? data.decisions[0] : null;
 
         if (decision == null)
         {
-            Debug.LogError("ScenarioManager: no decisions found for phase 7.");
+            Debug.LogError("ScenarioManager: no decisions for phase 7.");
             if (loadingOverlay) loadingOverlay.SetActive(false);
             return;
         }
 
         StartCoroutine(
             APIManager.Instance.SubmitDecision(
-                decision.decision_id,
-                decision.scenario_id,
+                decision.decision_id, decision.scenario_id,
                 GameManager.Instance.countryCode,
                 OnPhase7Submitted
             )
@@ -319,18 +418,12 @@ public class ScenarioManager : MonoBehaviour
 
         DecisionSubmitResponse response;
         try { response = JsonUtility.FromJson<DecisionSubmitResponse>(json); }
-        catch (System.Exception e)
-        {
-            Debug.LogError("Phase 7 response parse error: " + e.Message);
-            return;
-        }
+        catch (System.Exception e) { Debug.LogError("Phase 7 parse error: " + e.Message); return; }
 
-        // Apply the final score adjustments
         GameManager.Instance.ApplyAdjustedScores(response.adjusted_scores);
 
         string outcome = response.final_outcome ?? "Game Over";
         GameManager.Instance.finalOutcome = outcome;
-
         ShowFinalOutcomePanel(outcome);
     }
 
@@ -370,8 +463,7 @@ public class ScenarioManager : MonoBehaviour
 
         StartCoroutine(
             APIManager.Instance.SubmitEventDecision(
-                _pendingEvent.event_id,
-                choice,
+                _pendingEvent.event_id, choice,
                 GameManager.Instance.countryCode,
                 OnEventDecisionSubmitted
             )
@@ -391,31 +483,61 @@ public class ScenarioManager : MonoBehaviour
         AdvancePhase();
     }
 
-    // ── Phase advancement ─────────────────────────────────────────────────────
+    // ── Replay ────────────────────────────────────────────────────────────────
 
-    private void AdvancePhase()
+    public void ReplayGame()
     {
-        GameManager.Instance.NextPhase();
+        if (replayButton) replayButton.interactable = false;
+        if (loadingOverlay) loadingOverlay.SetActive(true);
+        StartCoroutine(APIManager.Instance.ResetProgress(OnProgressReset));
     }
 
-    // ── Final outcome ─────────────────────────────────────────────────────────
+    private void OnProgressReset()
+    {
+        if (loadingOverlay) loadingOverlay.SetActive(false);
+        HideAllPanels();
+        GameManager.Instance.ResetGame();
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void AdvancePhase() => GameManager.Instance.NextPhase();
 
     private void ShowFinalOutcomePanel(string outcome)
     {
-        if (outcomeCanvas == null)
-        {
-            Debug.Log("Final Outcome: " + outcome);
-            return;
-        }
+        if (outcomeCanvas == null) { Debug.Log("Final Outcome: " + outcome); return; }
 
         if (outcomeText) outcomeText.text = outcome;
         if (outcomeTotalScoreText)
             outcomeTotalScoreText.text = "Final Score: " + GameManager.Instance.totalImpactScore;
 
+        if (replayButton != null)
+        {
+            replayButton.onClick.RemoveAllListeners();
+            replayButton.onClick.AddListener(ReplayGame);
+            replayButton.gameObject.SetActive(true);
+        }
+
         outcomeCanvas.SetActive(true);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    private void SpawnDecisionButtons(DecisionData[] decisions, System.Action<DecisionData> onClick)
+    {
+        foreach (Transform child in buttonContainer)
+            Destroy(child.gameObject);
+
+        if (decisions == null) return;
+
+        foreach (var decision in decisions)
+        {
+            var btn = Instantiate(decisionButtonPrefab, buttonContainer);
+            var label = btn.GetComponentInChildren<TMP_Text>();
+            if (label) label.text = decision.choice_text;
+
+            var captured = decision;
+            btn.GetComponent<Button>().onClick.AddListener(() => onClick(captured));
+        }
+    }
 
     private void HideAllPanels()
     {

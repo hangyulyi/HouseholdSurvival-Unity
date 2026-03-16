@@ -4,10 +4,8 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Displays live player stats from GameManager.
-/// Subscribes to GameManager.onStatsChanged so it updates immediately
-/// whenever the backend returns adjusted scores.
-///
-/// Attach to: the PlayerStatus HUD canvas object.
+/// Subscribes to GameManager.onStatsChanged — updates automatically after every
+/// backend response without needing to poll in Update.
 /// </summary>
 public class PlayerStatusUI : MonoBehaviour
 {
@@ -17,19 +15,19 @@ public class PlayerStatusUI : MonoBehaviour
     public TMP_Text countryText;
 
     [Header("Stats")]
-    public TMP_Text moneyText;
+    public TMP_Text moneyText;       // uses country currency via GameManager.FormatMoney()
     public TMP_Text healthText;
     public TMP_Text stressText;
     public TMP_Text happinessText;
-    public TMP_Text debtText;
+    public TMP_Text debtText;        // also uses country currency
 
-    [Header("Score")]
+    [Header("Scores")]
     public TMP_Text totalScoreText;
     public TMP_Text economicScoreText;
     public TMP_Text socialScoreText;
     public TMP_Text healthScoreText;
 
-    [Header("Optional Stat Bars")]
+    [Header("Optional Stat Bars (0–100)")]
     public Slider healthBar;
     public Slider stressBar;
     public Slider happinessBar;
@@ -50,14 +48,13 @@ public class PlayerStatusUI : MonoBehaviour
 
     void Start() => Refresh();
 
-    // ── Public ────────────────────────────────────────────────────────────────
+    // ── Public API ────────────────────────────────────────────────────────────
 
     public void SetName(string playerName)
     {
         if (nameText) nameText.text = playerName;
     }
 
-    /// <summary>Re-read all values from GameManager and push to UI.</summary>
     public void Refresh()
     {
         if (GameManager.Instance == null) return;
@@ -67,18 +64,19 @@ public class PlayerStatusUI : MonoBehaviour
         if (phaseText) phaseText.text = $"Phase {gm.phase} / {GameManager.MAX_PHASES}";
         if (countryText) countryText.text = gm.countryCode.ToUpper();
 
-        if (moneyText) moneyText.text = "$" + gm.money;
+        // Money and debt use the country's currency format
+        if (moneyText) moneyText.text = gm.FormatMoney(gm.money);
+        if (debtText) debtText.text = "Debt: " + gm.FormatMoney(gm.debt);
+
         if (healthText) healthText.text = "Health: " + gm.health;
         if (stressText) stressText.text = "Stress: " + gm.stress;
         if (happinessText) happinessText.text = "Happiness: " + gm.happiness;
-        if (debtText) debtText.text = "Debt: $" + gm.debt;
 
         if (totalScoreText) totalScoreText.text = "Score: " + gm.totalImpactScore;
         if (economicScoreText) economicScoreText.text = "Econ: " + gm.economicScore;
         if (socialScoreText) socialScoreText.text = "Social: " + gm.socialScore;
         if (healthScoreText) healthScoreText.text = "Health Score: " + gm.healthScore;
 
-        // Sliders (0–100 range)
         if (healthBar) healthBar.value = gm.health;
         if (stressBar) stressBar.value = gm.stress;
         if (happinessBar) happinessBar.value = gm.happiness;
