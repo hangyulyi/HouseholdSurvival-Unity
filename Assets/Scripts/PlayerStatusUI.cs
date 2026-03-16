@@ -15,11 +15,11 @@ public class PlayerStatusUI : MonoBehaviour
     public TMP_Text countryText;
 
     [Header("Stats")]
-    public TMP_Text moneyText;       // uses country currency via GameManager.FormatMoney()
+    public TMP_Text moneyText;
     public TMP_Text healthText;
     public TMP_Text stressText;
     public TMP_Text happinessText;
-    public TMP_Text debtText;        // also uses country currency
+    public TMP_Text debtText;
 
     [Header("Scores")]
     public TMP_Text totalScoreText;
@@ -27,10 +27,26 @@ public class PlayerStatusUI : MonoBehaviour
     public TMP_Text socialScoreText;
     public TMP_Text healthScoreText;
 
-    [Header("Optional Stat Bars (0–100)")]
+    [Header("Optional Stat Bars (0-100)")]
     public Slider healthBar;
     public Slider stressBar;
     public Slider happinessBar;
+
+    [Header("Player Face")]
+    [Tooltip("The Image component on the HUD that shows the player's face")]
+    public Image faceImage;
+    public Sprite neutralSprite;
+    public Sprite happySprite;
+    public Sprite sadSprite;
+    public Sprite sickSprite;
+    public Sprite tiredSprite;
+
+    [Header("Face Thresholds")]
+    [Range(0, 100)] public int sickThreshold = 30;
+    [Range(0, 100)] public int tiredThreshold = 70;
+    [Range(0, 100)] public int sadThreshold = 30;
+    [Range(0, 100)] public int happyThreshold = 70;
+    [Range(0, 100)] public int happyMaxStress = 40;
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -48,8 +64,6 @@ public class PlayerStatusUI : MonoBehaviour
 
     void Start() => Refresh();
 
-    // ── Public API ────────────────────────────────────────────────────────────
-
     public void SetName(string playerName)
     {
         if (nameText) nameText.text = playerName;
@@ -64,10 +78,8 @@ public class PlayerStatusUI : MonoBehaviour
         if (phaseText) phaseText.text = $"Phase {gm.phase} / {GameManager.MAX_PHASES}";
         if (countryText) countryText.text = gm.countryCode.ToUpper();
 
-        // Money and debt use the country's currency format
         if (moneyText) moneyText.text = gm.FormatMoney(gm.money);
         if (debtText) debtText.text = "Debt: " + gm.FormatMoney(gm.debt);
-
         if (healthText) healthText.text = "Health: " + gm.health;
         if (stressText) stressText.text = "Stress: " + gm.stress;
         if (happinessText) happinessText.text = "Happiness: " + gm.happiness;
@@ -80,5 +92,23 @@ public class PlayerStatusUI : MonoBehaviour
         if (healthBar) healthBar.value = gm.health;
         if (stressBar) stressBar.value = gm.stress;
         if (happinessBar) happinessBar.value = gm.happiness;
+
+        UpdateFace(gm.health, gm.stress, gm.happiness);
+    }
+
+    private void UpdateFace(int health, int stress, int happiness)
+    {
+        if (faceImage == null) return;
+
+        Sprite next;
+        if (health <= sickThreshold) next = sickSprite;
+        else if (stress >= tiredThreshold) next = tiredSprite;
+        else if (happiness <= sadThreshold) next = sadSprite;
+        else if (happiness >= happyThreshold && stress < happyMaxStress) next = happySprite;
+        else next = neutralSprite;
+
+        // Fall back to neutral if the chosen sprite wasn't assigned
+        if (next == null) next = neutralSprite;
+        if (next != null) faceImage.sprite = next;
     }
 }
