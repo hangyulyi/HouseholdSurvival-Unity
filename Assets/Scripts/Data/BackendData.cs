@@ -65,12 +65,9 @@ public class CountryEventData
 [Serializable]
 public class CountryEventWrapper
 {
-    public CountryEventData @event;  // "event" is a reserved word — use verbatim
+    public CountryEventData @event;
 }
 
-// ============================================================
-//  SESSION
-// ============================================================
 
 [Serializable]
 public class SessionStartResponse
@@ -92,9 +89,6 @@ public class SessionData
     public string completed_at;
 }
 
-// ============================================================
-//  SCENARIOS & DECISIONS
-// ============================================================
 
 [Serializable]
 public class ScenarioResponse

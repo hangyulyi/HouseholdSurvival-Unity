@@ -1,14 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
-/// <summary>
-/// Attach to any sprite/object on the map that should trigger a scenario when clicked.
-/// Requires a Collider2D on the object (Box Collider 2D works fine).
-///
-/// Setup:
-///   1. Add this script to your interactable GameObject
-///   2. Add a Box Collider 2D and resize it to match the sprite
-/// </summary>
+
+// handle scenarios (move on to next phase)
+
 public class LoadScenario : MonoBehaviour
 {
     private Camera _cam;
@@ -17,9 +12,6 @@ public class LoadScenario : MonoBehaviour
     {
         _cam = Camera.main;
 
-        // ── FUTURE: proximity + E-key interaction ─────────────────────────────
-        // Uncomment and fill in when you want E-key support:
-        //
         // public float interactRadius = 1.5f;
         // public string playerTag = "Player";
         // public GameObject interactPrompt;
@@ -29,15 +21,13 @@ public class LoadScenario : MonoBehaviour
         // var playerObj = GameObject.FindGameObjectWithTag(playerTag);
         // if (playerObj != null) _playerTransform = playerObj.transform;
         // if (interactPrompt) interactPrompt.SetActive(false);
-        // ─────────────────────────────────────────────────────────────────────
     }
 
     void Update()
     {
         
 
-        // ── FUTURE: E-key when in range ───────────────────────────────────────
-        // Uncomment when ready to add proximity interaction:
+        // E-key when in range 
         //
         // if (_playerTransform != null)
         // {
@@ -51,7 +41,6 @@ public class LoadScenario : MonoBehaviour
         //     if (_playerInRange && Input.GetKeyDown(KeyCode.E))
         //         Trigger();
         // }
-        // ─────────────────────────────────────────────────────────────────────
     }
 
     public void Trigger()

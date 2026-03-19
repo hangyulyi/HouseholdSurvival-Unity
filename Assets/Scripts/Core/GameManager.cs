@@ -1,54 +1,50 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
-/// <summary>
+///
 /// Central game state. Persists across scenes.
 /// Starting stats are populated from the backend when a session begins.
-/// </summary>
+/// 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    // ── Player identity ───────────────────────────────────────────────────────
+    // player
     public string playerName = "";
     public string countryCode = "";
     public int sessionId = -1;
 
-    // ── Game phase ────────────────────────────────────────────────────────────
+    // phase
     public int phase = 1;
     public const int MAX_PHASES = 7;
 
-    // ── Player stats ──────────────────────────────────────────────────────────
+    // Player stats 
     public int money = 0;
     public int health = 70;
     public int stress = 30;
     public int happiness = 60;
     public int debt = 0;
 
-    // ── Running scores ────────────────────────────────────────────────────────
+    // Running scores
     public int economicScore = 0;
     public int socialScore = 0;
     public int healthScore = 0;
     public int environmentalScore = 0;
     public int totalImpactScore = 0;
 
-    // ── Country multipliers ───────────────────────────────────────────────────
+    // Country multipliers
     public float healthcareCostMult = 1f;
     public float educationAccessMult = 1f;
     public float safetyNetMult = 1f;
 
-    // ── Final outcome ─────────────────────────────────────────────────────────
+    // Final outcome 
     public string finalOutcome = "";
 
-    // ── Phase 2: step-3 decisions saved across the minigame scene load ────────
-    // ScenarioManager stores these here before loading the Minigame scene.
-    // On return, ScenarioManager.Start() picks them up and shows them.
+    // Handle phase 2 (multiple steps in one phase)
     [HideInInspector] public DecisionData[] pendingPhase2Step3 = null;
 
-    // ── UI event ──────────────────────────────────────────────────────────────
+    // update ui
     public UnityEvent onStatsChanged = new UnityEvent();
-
-    // ─────────────────────────────────────────────────────────────────────────
 
     void Awake()
     {
@@ -56,7 +52,7 @@ public class GameManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    // ── Session init ──────────────────────────────────────────────────────────
+    // Session init
 
     public void InitialiseFromCountryConfig(CountryData config, SessionData session)
     {
@@ -80,7 +76,7 @@ public class GameManager : MonoBehaviour
         onStatsChanged.Invoke();
     }
 
-    // ── Score application ─────────────────────────────────────────────────────
+    // Score update
 
     public void ApplyAdjustedScores(AdjustedScores scores)
     {
@@ -112,7 +108,7 @@ public class GameManager : MonoBehaviour
         onStatsChanged.Invoke();
     }
 
-    // ── Phase ─────────────────────────────────────────────────────────────────
+    // Phase
 
     public void NextPhase()
     {
@@ -122,17 +118,7 @@ public class GameManager : MonoBehaviour
 
     public bool IsGameOver() => phase > MAX_PHASES;
 
-    // ── Currency formatting ───────────────────────────────────────────────────
-
-    /// <summary>
-    /// Returns the money value formatted with the correct currency symbol/code
-    /// for the currently selected country.
-    ///   us  →  $400
-    ///   br  →  R$220
-    ///   in  →  ₹180
-    ///   ke  →  KSh90
-    ///   se  →  600 kr
-    /// </summary>
+    // Currency formatting
     public string FormatMoney(int amount)
     {
         return countryCode switch
@@ -146,7 +132,6 @@ public class GameManager : MonoBehaviour
         };
     }
 
-    /// <summary>Returns just the currency symbol/prefix for the selected country.</summary>
     public string CurrencySymbol()
     {
         return countryCode switch
@@ -160,7 +145,7 @@ public class GameManager : MonoBehaviour
         };
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // Helpers 
 
     public void AddMoney(int amount)
     {

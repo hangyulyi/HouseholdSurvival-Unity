@@ -2,11 +2,7 @@
 using TMPro;
 using UnityEngine.UI;
 
-/// <summary>
-/// Displays live player stats from GameManager.
-/// Subscribes to GameManager.onStatsChanged — updates automatically after every
-/// backend response without needing to poll in Update.
-/// </summary>
+
 public class PlayerStatusUI : MonoBehaviour
 {
     [Header("Identity")]
@@ -48,7 +44,7 @@ public class PlayerStatusUI : MonoBehaviour
     [Range(0, 100)] public int happyThreshold = 70;
     [Range(0, 100)] public int happyMaxStress = 40;
 
-    // ─────────────────────────────────────────────────────────────────────────
+ 
 
     void OnEnable()
     {

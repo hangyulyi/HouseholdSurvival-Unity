@@ -4,20 +4,12 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Linq;
 
-/// <summary>
-/// Handles all scenario phases:
-///   Phase 2  — two-step flow: Step 1 (take job / decline / use savings),
-///               then Step 3 (spend earnings). If Step 1 triggers the minigame,
-///               Step 3 decisions are saved to GameManager and shown on return.
-///   Phases 1, 3–5 — normal: show decisions, submit, show country event, advance
-///   Phase 6  — KPI reflection dashboard with a Continue button
-///   Phase 7  — auto-resolves from total score; no player choice
-/// </summary>
+// Manages all scenarios, accounting for phase 2 with multiple steps
 public class ScenarioManager : MonoBehaviour
 {
     public static ScenarioManager Instance;
 
-    // ── Phases 1–5: Scenario panel ────────────────────────────────────────────
+    // Phases 1–5: Scenario panel
     [Header("Scenario Panel (Phases 1–5)")]
     public GameObject scenarioCanvas;
     public TMP_Text titleText;
@@ -26,7 +18,7 @@ public class ScenarioManager : MonoBehaviour
     public Transform buttonContainer;
     public GameObject decisionButtonPrefab;
 
-    // ── Phase 6: Reflection / KPI dashboard ──────────────────────────────────
+    // Phase 6
     [Header("Reflection Panel (Phase 6)")]
     public GameObject reflectionCanvas;
     public TMP_Text reflectionTitleText;
@@ -42,7 +34,7 @@ public class ScenarioManager : MonoBehaviour
     public TMP_Text kpiTotalScoreText;
     public Button reflectionContinueButton;
 
-    // ── Country event panel ───────────────────────────────────────────────────
+    // Country event panel
     [Header("Country Event Panel")]
     public GameObject eventCanvas;
     public TMP_Text eventTitleText;
@@ -54,27 +46,23 @@ public class ScenarioManager : MonoBehaviour
     public TMP_Text eventChoiceBLabel;
     public TMP_Text eventChoiceCLabel;
 
-    // ── Phase 7: Final outcome panel ──────────────────────────────────────────
+    // Phase 7: Final outcome panel
     [Header("Final Outcome Panel (Phase 7)")]
     public GameObject outcomeCanvas;
     public TMP_Text outcomeText;
     public TMP_Text outcomeTotalScoreText;
     public Button replayButton;
 
-    // ── Loading ───────────────────────────────────────────────────────────────
     [Header("Loading")]
     public GameObject loadingOverlay;
 
-    // ── Phase 2 constants ─────────────────────────────────────────────────────
-    // The schema seeds exactly 3 step-1 decisions for phase 2 (one is the minigame
-    // trigger). Everything after those 3 is the step-3 "spend the earnings" set.
+    // phase 2 step 1 counter
     private const int PHASE2_STEP1_COUNT = 3;
 
-    // ── Internal state ────────────────────────────────────────────────────────
+    // Internal state 
     private ScenarioResponse _currentResponse;
     private CountryEventData _pendingEvent;
 
-    // ─────────────────────────────────────────────────────────────────────────
 
     void Awake()
     {
@@ -84,7 +72,7 @@ public class ScenarioManager : MonoBehaviour
 
     void Start()
     {
-        // If we just returned from the minigame, show the step-3 decisions
+        // If we just returned from the minigame, show the step-3 decisions (phase 2)
         if (GameManager.Instance != null &&
             GameManager.Instance.pendingPhase2Step3 != null &&
             GameManager.Instance.pendingPhase2Step3.Length > 0)
@@ -94,7 +82,7 @@ public class ScenarioManager : MonoBehaviour
         }
     }
 
-    // ── Public entry point ────────────────────────────────────────────────────
+    // Public entry point 
 
     public void StartScenario()
     {
@@ -118,7 +106,7 @@ public class ScenarioManager : MonoBehaviour
         );
     }
 
-    // ── Scenario loaded ───────────────────────────────────────────────────────
+    // Scenario loaded 
 
     private void OnScenarioLoaded(string json)
     {
@@ -145,7 +133,7 @@ public class ScenarioManager : MonoBehaviour
         else DisplayScenario(_currentResponse);
     }
 
-    // ── Standard scenario display (phases 1, 3, 4, 5) ────────────────────────
+    // Standard scenario display (phases 1, 3, 4, 5)
 
     private void DisplayScenario(ScenarioResponse data)
     {
@@ -209,7 +197,7 @@ public class ScenarioManager : MonoBehaviour
         }
     }
 
-    // ── Phase 2: Step 1 (take job / decline / use savings) ───────────────────
+    // Phase 2: Step 1
 
     private void DisplayPhase2Step1(ScenarioResponse data)
     {
@@ -217,8 +205,6 @@ public class ScenarioManager : MonoBehaviour
         descriptionText.text = data.scenario.description;
         if (sdgText) sdgText.text = data.scenario.sdg_goal ?? "";
 
-        // Step 1 = first PHASE2_STEP1_COUNT decisions
-        // Step 3 = the rest (stored for later)
         var allDecisions = data.decisions ?? new DecisionData[0];
 
         var step1 = allDecisions.Length > PHASE2_STEP1_COUNT
@@ -245,7 +231,6 @@ public class ScenarioManager : MonoBehaviour
 
         GameManager.Instance.ApplyAdjustedScores(response.adjusted_scores);
 
-        // Extract the step-3 decisions from the cached response
         var allDecisions = _currentResponse.decisions ?? new DecisionData[0];
         var step3Decisions = allDecisions.Length > PHASE2_STEP1_COUNT
             ? allDecisions[PHASE2_STEP1_COUNT..]
@@ -253,9 +238,7 @@ public class ScenarioManager : MonoBehaviour
 
         if (chosenDecision.is_minigame_trigger)
         {
-            // ── Player took the side job — run the minigame as "step 2" ──────
-            // Save step-3 decisions in GameManager (DontDestroyOnLoad) so they
-            // survive the scene load and show when the player returns.
+            // run the minigame as step 2"
             GameManager.Instance.pendingPhase2Step3 = step3Decisions;
 
             Debug.Log("Phase 2: minigame triggered. Step 3 decisions saved for after minigame.");
@@ -263,18 +246,18 @@ public class ScenarioManager : MonoBehaviour
         }
         else
         {
-            // ── Player declined or used savings — skip minigame, go to step 3 ──
+            // skip minigame, go to step 3
             ShowPhase2Step3(step3Decisions);
         }
     }
 
-    // ── Phase 2: Step 3 (spend the earnings) ─────────────────────────────────
+    // Phase 2: Step 3 (spend the earnings)
 
     private void ShowPhase2Step3(DecisionData[] step3Decisions)
     {
         if (step3Decisions == null || step3Decisions.Length == 0)
         {
-            // No step 3 (edge case) — just advance
+            // ensure if no step 3, able to advance
             AfterPhase2Complete();
             return;
         }
@@ -334,8 +317,7 @@ public class ScenarioManager : MonoBehaviour
         }
     }
 
-    // ── Phase 6: Reflection dashboard ────────────────────────────────────────
-
+    // Phase 6: Reflection dashboard 
     private void ShowReflectionPanel(ScenarioResponse data)
     {
         if (reflectionCanvas == null)
@@ -387,8 +369,7 @@ public class ScenarioManager : MonoBehaviour
         );
     }
 
-    // ── Phase 7: auto-resolve ─────────────────────────────────────────────────
-
+    // Phase 7
     private void AutoSubmitPhase7(ScenarioResponse data)
     {
         if (loadingOverlay) loadingOverlay.SetActive(true);
@@ -427,7 +408,7 @@ public class ScenarioManager : MonoBehaviour
         ShowFinalOutcomePanel(outcome);
     }
 
-    // ── Country event ─────────────────────────────────────────────────────────
+    // Country event
 
     private void ShowCountryEvent(CountryEventData ev)
     {
@@ -483,7 +464,7 @@ public class ScenarioManager : MonoBehaviour
         AdvancePhase();
     }
 
-    // ── Replay ────────────────────────────────────────────────────────────────
+    // Replay
 
     public void ReplayGame()
     {
@@ -499,7 +480,7 @@ public class ScenarioManager : MonoBehaviour
         GameManager.Instance.ResetGame();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // Helpers
 
     private void AdvancePhase() => GameManager.Instance.NextPhase();
 

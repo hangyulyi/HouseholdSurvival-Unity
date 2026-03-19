@@ -3,20 +3,7 @@ using UnityEngine.Networking;
 using System.Collections;
 using System.Text;
 
-/// <summary>
-/// EDITOR / TESTING ONLY — auto-logs in to the backend and stores the JWT so
-/// the rest of the game can make authenticated API calls without needing React.
-///
-/// Setup:
-///   1. Create an empty GameObject called "DevAuthHelper" in your Main scene.
-///   2. Attach this script.
-///   3. Fill in testEmail and testPassword in the Inspector (must match a real
-///      user in your database — register one first via the backend if needed).
-///   4. Make sure "Only Run In Editor" is ticked so it never ships.
-///
-/// In a real build, React handles login and sets PlayerPrefs["token"] before
-/// the Unity scene loads. This script only fills that gap during local testing.
-/// </summary>
+// Used for local testing only
 public class DevAuthHelper : MonoBehaviour
 {
 #if UNITY_EDITOR
@@ -27,7 +14,6 @@ public class DevAuthHelper : MonoBehaviour
     [Tooltip("Tick this to skip auto-login (useful if you already have a token from a previous run)")]
     public bool skipIfTokenExists = true;
 
-    // Set in Inspector to match your backend URL
     [SerializeField] private string baseUrl = "http://localhost:3000";
 
     void Start()
@@ -80,7 +66,7 @@ public class DevAuthHelper : MonoBehaviour
         Debug.Log($"[DevAuthHelper] Logged in as '{parsed.user.email}' (userId={parsed.user.user_id}). Token stored.");
     }
 
-    // Minimal response shape — only fields we need
+
     [System.Serializable]
     private class LoginResponse
     {
