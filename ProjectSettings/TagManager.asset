@@ -42,5 +42,14 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Ground
+    uniqueID: 3637630831
+    locked: 0
+  - name: Furnature
+    uniqueID: 1550828879
+    locked: 0
+  - name: Player
+    uniqueID: 150770937
+    locked: 0
   m_RenderingLayers:
   - Default

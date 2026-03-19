@@ -1,13 +1,110 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
+
 
 public class PlayerStatusUI : MonoBehaviour
 {
-    public TextMeshProUGUI nameText;
-    
+    [Header("Identity")]
+    public TMP_Text nameText;
+    public TMP_Text phaseText;
+    public TMP_Text countryText;
 
-    public void SetName(string newName)
+    [Header("Stats")]
+    public TMP_Text moneyText;
+    public TMP_Text healthText;
+    public TMP_Text stressText;
+    public TMP_Text happinessText;
+    public TMP_Text debtText;
+
+    [Header("Scores")]
+    public TMP_Text totalScoreText;
+    public TMP_Text economicScoreText;
+    public TMP_Text socialScoreText;
+    public TMP_Text healthScoreText;
+
+    [Header("Optional Stat Bars (0-100)")]
+    public Slider healthBar;
+    public Slider stressBar;
+    public Slider happinessBar;
+
+    [Header("Player Face")]
+    [Tooltip("The Image component on the HUD that shows the player's face")]
+    public Image faceImage;
+    public Sprite neutralSprite;
+    public Sprite happySprite;
+    public Sprite sadSprite;
+    public Sprite sickSprite;
+    public Sprite tiredSprite;
+
+    [Header("Face Thresholds")]
+    [Range(0, 100)] public int sickThreshold = 30;
+    [Range(0, 100)] public int tiredThreshold = 70;
+    [Range(0, 100)] public int sadThreshold = 30;
+    [Range(0, 100)] public int happyThreshold = 70;
+    [Range(0, 100)] public int happyMaxStress = 40;
+
+ 
+
+    void OnEnable()
     {
-        nameText.text = newName;
+        if (GameManager.Instance != null)
+            GameManager.Instance.onStatsChanged.AddListener(Refresh);
+    }
+
+    void OnDisable()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.onStatsChanged.RemoveListener(Refresh);
+    }
+
+    void Start() => Refresh();
+
+    public void SetName(string playerName)
+    {
+        if (nameText) nameText.text = playerName;
+    }
+
+    public void Refresh()
+    {
+        if (GameManager.Instance == null) return;
+        var gm = GameManager.Instance;
+
+        if (nameText) nameText.text = gm.playerName;
+        if (phaseText) phaseText.text = $"Phase {gm.phase} / {GameManager.MAX_PHASES}";
+        if (countryText) countryText.text = gm.countryCode.ToUpper();
+
+        if (moneyText) moneyText.text = gm.FormatMoney(gm.money);
+        if (debtText) debtText.text = "Debt: " + gm.FormatMoney(gm.debt);
+        if (healthText) healthText.text = "Health: " + gm.health;
+        if (stressText) stressText.text = "Stress: " + gm.stress;
+        if (happinessText) happinessText.text = "Happiness: " + gm.happiness;
+
+        if (totalScoreText) totalScoreText.text = "Score: " + gm.totalImpactScore;
+        if (economicScoreText) economicScoreText.text = "Econ: " + gm.economicScore;
+        if (socialScoreText) socialScoreText.text = "Social: " + gm.socialScore;
+        if (healthScoreText) healthScoreText.text = "Health Score: " + gm.healthScore;
+
+        if (healthBar) healthBar.value = gm.health;
+        if (stressBar) stressBar.value = gm.stress;
+        if (happinessBar) happinessBar.value = gm.happiness;
+
+        UpdateFace(gm.health, gm.stress, gm.happiness);
+    }
+
+    private void UpdateFace(int health, int stress, int happiness)
+    {
+        if (faceImage == null) return;
+
+        Sprite next;
+        if (health <= sickThreshold) next = sickSprite;
+        else if (stress >= tiredThreshold) next = tiredSprite;
+        else if (happiness <= sadThreshold) next = sadSprite;
+        else if (happiness >= happyThreshold && stress < happyMaxStress) next = happySprite;
+        else next = neutralSprite;
+
+        // Fall back to neutral if the chosen sprite wasn't assigned
+        if (next == null) next = neutralSprite;
+        if (next != null) faceImage.sprite = next;
     }
 }
