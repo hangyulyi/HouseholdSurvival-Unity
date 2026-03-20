@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using TMPro;
 
 public class LogicManagerScript : MonoBehaviour
@@ -16,23 +14,31 @@ public class LogicManagerScript : MonoBehaviour
         playerScore += 1;
         scoreText.text = playerScore.ToString() + "  <sprite=0>";
     }
+
+    /// <summary>Restart button on the game over screen — full clean reset.</summary>
     public void restartGame()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (MinigameManager.Instance != null)
+            MinigameManager.Instance.OpenMinigame();
+        else
+            Debug.LogError("MinigameManager not found.");
     }
+
     public void gameOver()
     {
         finalScore.text = "<sprite=0>Collected:  " + playerScore.ToString();
         gameOverSceen.SetActive(true);
 
-        // convert score to money
         int moneyEarned = playerScore * 5;
-
-        GameManager.Instance.AddMoney(moneyEarned);
+        if (GameManager.Instance != null)
+            GameManager.Instance.AddMoney(moneyEarned);
     }
 
     public void returnToMainGame()
     {
-        SceneManager.LoadScene("Main");
+        if (MinigameManager.Instance != null)
+            MinigameManager.Instance.CloseMinigame();
+        else
+            Debug.LogError("MinigameManager not found.");
     }
 }

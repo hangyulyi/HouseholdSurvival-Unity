@@ -2,7 +2,11 @@
 using TMPro;
 using UnityEngine.UI;
 
-
+/// <summary>
+/// Displays live player stats from GameManager.
+/// Subscribes to GameManager.onStatsChanged — updates automatically after every
+/// backend response without needing to poll in Update.
+/// </summary>
 public class PlayerStatusUI : MonoBehaviour
 {
     [Header("Identity")]
@@ -37,6 +41,11 @@ public class PlayerStatusUI : MonoBehaviour
     public Sprite sickSprite;
     public Sprite tiredSprite;
 
+    [Header("Currency Font Override")]
+    [Tooltip("TMP font asset that includes the rupee symbol. Applied when playing as India.")]
+    public TMPro.TMP_FontAsset rupeeFont;
+    private TMPro.TMP_FontAsset _defaultMoneyFont;
+
     [Header("Face Thresholds")]
     [Range(0, 100)] public int sickThreshold = 30;
     [Range(0, 100)] public int tiredThreshold = 70;
@@ -44,7 +53,7 @@ public class PlayerStatusUI : MonoBehaviour
     [Range(0, 100)] public int happyThreshold = 70;
     [Range(0, 100)] public int happyMaxStress = 40;
 
- 
+    // ─────────────────────────────────────────────────────────────────────────
 
     void OnEnable()
     {
@@ -58,7 +67,11 @@ public class PlayerStatusUI : MonoBehaviour
             GameManager.Instance.onStatsChanged.RemoveListener(Refresh);
     }
 
-    void Start() => Refresh();
+    void Start()
+    {
+        if (moneyText) _defaultMoneyFont = moneyText.font;
+        Refresh();
+    }
 
     public void SetName(string playerName)
     {
@@ -73,6 +86,15 @@ public class PlayerStatusUI : MonoBehaviour
         if (nameText) nameText.text = gm.playerName;
         if (phaseText) phaseText.text = $"Phase {gm.phase} / {GameManager.MAX_PHASES}";
         if (countryText) countryText.text = gm.countryCode.ToUpper();
+
+        // Swap to rupee font for India, restore default for all other countries
+        if (moneyText != null)
+        {
+            bool isIndia = gm.countryCode == "in";
+            moneyText.font = (isIndia && rupeeFont != null) ? rupeeFont : _defaultMoneyFont;
+            if (debtText != null)
+                debtText.font = moneyText.font;
+        }
 
         if (moneyText) moneyText.text = gm.FormatMoney(gm.money);
         if (debtText) debtText.text = "Debt: " + gm.FormatMoney(gm.debt);

@@ -1,27 +1,38 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
 using System.Text;
 
+/// <summary>
+/// Singleton HTTP client for the Household Survival backend.
+/// React handles login and stores the JWT + userId in PlayerPrefs before loading the Unity scene.
+/// Expected PlayerPrefs keys:  "token"  (JWT string)
+///                              "userId" (int as string)
+/// </summary>
 public class APIManager : MonoBehaviour
 {
     public static APIManager Instance;
 
-    // update when deployed
+    // ── Change to your deployed URL when hosting the backend ──
     [SerializeField] private string baseUrl = "http://localhost:3000";
 
     void Awake()
     {
+        // DontDestroyOnLoad only works on root GameObjects.
+        transform.SetParent(null);
+
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // ensure to not restart when changing scenes
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
         }
     }
+
+    // ── Auth helpers ─────────────────────────────────────────────────────────
 
     private string GetToken() => PlayerPrefs.GetString("token", "");
 
@@ -43,7 +54,11 @@ public class APIManager : MonoBehaviour
         return req;
     }
 
+    // ────────────────────────────────────────────────────────────────────────
+    // COUNTRIES
+    // ────────────────────────────────────────────────────────────────────────
 
+    // GET /api/countries  no auth required, returns CountriesResponse
     public IEnumerator GetAllCountries(System.Action<string> callback)
     {
         using var req = UnityWebRequest.Get(baseUrl + "/api/countries");
@@ -54,6 +69,7 @@ public class APIManager : MonoBehaviour
             Debug.LogError("GetAllCountries failed: " + req.error);
     }
 
+    // GET /api/countries/:code — returns country data + its events
     public IEnumerator GetCountry(string countryCode, System.Action<string> callback)
     {
         using var req = UnityWebRequest.Get(baseUrl + "/api/countries/" + countryCode);
@@ -64,7 +80,7 @@ public class APIManager : MonoBehaviour
             Debug.LogError("GetCountry failed: " + req.error);
     }
 
-
+    // GET /api/countries/:code/events/:phase
     public IEnumerator GetCountryEvent(string countryCode, int phase, System.Action<string> callback)
     {
         string url = $"{baseUrl}/api/countries/{countryCode}/events/{phase}";
@@ -76,9 +92,13 @@ public class APIManager : MonoBehaviour
             Debug.LogError("GetCountryEvent failed: " + req.error);
     }
 
+    // ────────────────────────────────────────────────────────────────────────
+    // SESSIONS
+    // ────────────────────────────────────────────────────────────────────────
 
-    // POST /api/sessions/start
-
+    /// POST /api/sessions/start
+    /// Call this when the player confirms their country selection.
+    /// Returns a SessionStartResponse containing session info + country starting stats.
     public IEnumerator StartSession(string countryCode, string characterName, System.Action<string> callback)
     {
         string json = $"{{\"country_code\":\"{countryCode}\",\"character_name\":\"{characterName}\"}}";
@@ -90,9 +110,14 @@ public class APIManager : MonoBehaviour
             Debug.LogError("StartSession failed: " + req.error + "\n" + req.downloadHandler.text);
     }
 
+    // ────────────────────────────────────────────────────────────────────────
+    // SCENARIOS
+    // ────────────────────────────────────────────────────────────────────────
 
-    // GET /api/scenarios/:id?country=code
-
+    /// GET /api/scenarios/:id?country=code
+    /// scenarioId matches phase number (phase 1 = scenario_id 1, etc.)
+    /// Returns ScenarioResponse with scenario, decisions, and optional country_event.
+    /// Requires auth token
     public IEnumerator LoadScenario(int scenarioId, string countryCode, System.Action<string> callback)
     {
         string url = $"{baseUrl}/api/scenarios/{scenarioId}?country={countryCode}";
@@ -104,9 +129,11 @@ public class APIManager : MonoBehaviour
             Debug.LogError("LoadScenario failed: " + req.error + "\n" + req.downloadHandler.text);
     }
 
+    // ────────────────────────────────────────────────────────────────────────
+    // DECISIONS
+    // ────────────────────────────────────────────────────────────────────────
 
-    // POST /api/decisions/submit
-
+    // POST /api/decisions/submit Submits a scenario decision and returns adjusted scores + optional final outcome
     public IEnumerator SubmitDecision(int decisionId, int scenarioId, string countryCode,
                                       System.Action<string> callback)
     {
@@ -119,9 +146,7 @@ public class APIManager : MonoBehaviour
             Debug.LogError("SubmitDecision failed: " + req.error + "\n" + req.downloadHandler.text);
     }
 
-
-    // POST /api/decisions/submit-event
-
+    // POST /api/decisions/submit-event Submits a country-specific event choice
     public IEnumerator SubmitEventDecision(int eventId, string chosenChoice, string countryCode,
                                            System.Action<string> callback)
     {
@@ -134,9 +159,11 @@ public class APIManager : MonoBehaviour
             Debug.LogError("SubmitEventDecision failed: " + req.error + "\n" + req.downloadHandler.text);
     }
 
+    // ────────────────────────────────────────────────────────────────────────
+    // PROGRESS
+    // ────────────────────────────────────────────────────────────────────────
 
-
-    // GET /api/progress
+    // GET /api/progress  returns all phase progress for this player
     public IEnumerator GetProgress(System.Action<string> callback)
     {
         using var req = AuthorizedGet(baseUrl + "/api/progress");
@@ -147,7 +174,7 @@ public class APIManager : MonoBehaviour
             Debug.LogError("GetProgress failed: " + req.error);
     }
 
-    /// GET /api/progress/leaderboard?country=code
+    // GET /api/progress/leaderboard?country=code
     public IEnumerator GetLeaderboard(string countryCode, System.Action<string> callback)
     {
         string url = baseUrl + "/api/progress/leaderboard";
@@ -162,7 +189,7 @@ public class APIManager : MonoBehaviour
             Debug.LogError("GetLeaderboard failed: " + req.error);
     }
 
-    //POST /api/progress/reset
+    // POST /api/progress/reset  wipes all progress for this player
     public IEnumerator ResetProgress(System.Action callback)
     {
         using var req = AuthorizedPost(baseUrl + "/api/progress/reset", "{}");
@@ -172,4 +199,27 @@ public class APIManager : MonoBehaviour
         else
             Debug.LogError("ResetProgress failed: " + req.error);
     }
+
+    // GET /api/progress/summary  phase decisions + totals + session for results screen
+    public IEnumerator GetProgressSummary(System.Action<string> callback)
+    {
+        using var req = AuthorizedGet(baseUrl + "/api/progress/summary");
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("GetProgressSummary failed: " + req.error);
+    }
+
+    // GET /api/countries/:code/worldbank  live World Bank indicators
+    public IEnumerator GetWorldBankData(string countryCode, System.Action<string> callback)
+    {
+        using var req = UnityWebRequest.Get(baseUrl + "/api/countries/" + countryCode + "/worldbank");
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+            callback(req.downloadHandler.text);
+        else
+            Debug.LogError("GetWorldBankData failed: " + req.error);
+    }
+
 }
