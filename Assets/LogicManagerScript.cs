@@ -16,23 +16,29 @@ public class LogicManagerScript : MonoBehaviour
         playerScore += 1;
         scoreText.text = playerScore.ToString() + "  <sprite=0>";
     }
+
     public void restartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+
     public void gameOver()
     {
         finalScore.text = "<sprite=0>Collected:  " + playerScore.ToString();
         gameOverSceen.SetActive(true);
 
-        // convert score to money
+        // Convert pearls collected to money and apply to GameManager
         int moneyEarned = playerScore * 5;
-
-        GameManager.Instance.AddMoney(moneyEarned);
+        if (GameManager.Instance != null)
+            GameManager.Instance.AddMoney(moneyEarned);
     }
 
     public void returnToMainGame()
     {
+        // LoadScene("Main") is safe — GameManager is DontDestroyOnLoad so
+        // countryCode and all stats survive the scene transition.
+        // CountrySelectionController.Start() detects the saved countryCode
+        // and skips straight to the map rather than showing country selection.
         SceneManager.LoadScene("Main");
     }
 }

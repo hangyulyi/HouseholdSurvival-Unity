@@ -36,7 +36,7 @@ public class CountrySelectionController : MonoBehaviour
     [Header("Blurb")]
     public TMP_Text countryName;
     public TMP_Text countryBlurb;
-    public TMP_Text difficultyText;
+    public TMP_Text difficultyText;     // optional dedicated difficulty label
 
     [Header("Confirm Panel")]
     public GameObject confirmPanel;
@@ -51,7 +51,12 @@ public class CountrySelectionController : MonoBehaviour
     public PlayerStatusUI playerStatusUI;
     public GameObject playerStatusCanvas;
 
+    [Header("Resume Prompt")]
+    [Tooltip("Panel shown when a saved session exists. Has Continue and New Game buttons.")]
+    public GameObject resumePromptPanel;
+    public TMPro.TMP_Text resumePromptText;   // optional — shows character + country name
 
+    // ── Fixed character per country (from the schema's intro_text characters) ──
     private static readonly Dictionary<string, string> CharacterNames = new()
     {
         { "br", "Lucas"  },
@@ -71,25 +76,112 @@ public class CountrySelectionController : MonoBehaviour
 
     void Awake()
     {
-        if (GameManager.Instance == null) return;
-
-        // If country was already chosen (e.g. returning from minigame), skip straight to map
-        if (!string.IsNullOrEmpty(GameManager.Instance.countryCode))
-        {
-            gameObject.SetActive(false);
-            playerStatusCanvas.SetActive(true);
-            playerStatusUI.Refresh();
-            ActivateMap(GameManager.Instance.countryCode);
-        }
+        if (resumePromptPanel) resumePromptPanel.SetActive(false);
     }
 
     void Start()
     {
+        string savedCode = PlayerPrefs.GetString("countryCode", "");
+        string liveCode = GameManager.Instance != null ? GameManager.Instance.countryCode : "";
+        string code = !string.IsNullOrEmpty(liveCode) ? liveCode : savedCode;
+
+        if (!string.IsNullOrEmpty(code))
+        {
+            // A session exists — ask the player whether to continue or start fresh
+            ShowResumePrompt(code);
+            return;
+        }
+
+        // No saved session — go straight to country selection
         if (loadingOverlay) loadingOverlay.SetActive(true);
         if (errorText) errorText.text = "";
-
-        // Public route — no auth token required
         StartCoroutine(APIManager.Instance.GetAllCountries(OnCountriesLoaded));
+    }
+
+    // ── Resume prompt ─────────────────────────────────────────────────────────
+
+    private void ShowResumePrompt(string code)
+    {
+        if (resumePromptPanel == null)
+        {
+            // No prompt panel assigned — just continue silently (old behaviour)
+            SkipToMap(code);
+            return;
+        }
+
+        // Populate the prompt text with who the player was
+        if (resumePromptText != null)
+        {
+            string savedName = PlayerPrefs.GetString("playerName", "");
+            string liveNameGM = GameManager.Instance != null ? GameManager.Instance.playerName : "";
+            string name = !string.IsNullOrEmpty(liveNameGM) ? liveNameGM : savedName;
+            string phase = GameManager.Instance != null
+                ? GameManager.Instance.phase.ToString()
+                : "?";
+
+            resumePromptText.text = $"Continue as {name}?\nPhase {phase} / {GameManager.MAX_PHASES}";
+        }
+
+        resumePromptPanel.SetActive(true);
+    }
+
+    /// <summary>Called by the Continue button on the resume prompt panel.</summary>
+    public void OnResumeContinue()
+    {
+        if (resumePromptPanel) resumePromptPanel.SetActive(false);
+
+        string savedCode = PlayerPrefs.GetString("countryCode", "");
+        string liveCode = GameManager.Instance != null ? GameManager.Instance.countryCode : "";
+        string code = !string.IsNullOrEmpty(liveCode) ? liveCode : savedCode;
+
+        SkipToMap(code);
+    }
+
+    /// <summary>Called by the New Game button on the resume prompt panel.</summary>
+    public void OnResumeNewGame()
+    {
+        if (resumePromptPanel) resumePromptPanel.SetActive(false);
+
+        // Wipe all saved state — backend progress reset is optional here since
+        // the player explicitly chose to start fresh; ResetGame clears local state.
+        if (GameManager.Instance != null)
+        {
+            // Optionally reset backend progress too
+            StartCoroutine(APIManager.Instance.ResetProgress(() =>
+            {
+                GameManager.Instance.ResetGame();
+            }));
+        }
+        else
+        {
+            PlayerPrefs.DeleteKey("countryCode");
+            PlayerPrefs.DeleteKey("playerName");
+            PlayerPrefs.Save();
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
+        }
+    }
+
+    /// <summary>Hides the selection panel and jumps straight to the in-game map.</summary>
+    private void SkipToMap(string code)
+    {
+        // Restore playerName from GameManager first, fall back to PlayerPrefs
+        if (GameManager.Instance != null)
+        {
+            if (string.IsNullOrEmpty(GameManager.Instance.playerName))
+                GameManager.Instance.playerName = PlayerPrefs.GetString("playerName", "");
+        }
+
+        gameObject.SetActive(false);
+        playerStatusCanvas.SetActive(true);
+
+        // SetName directly so the name field is correct regardless of Start() ordering
+        string name = GameManager.Instance != null
+            ? GameManager.Instance.playerName
+            : PlayerPrefs.GetString("playerName", "");
+        playerStatusUI.SetName(name);
+
+        playerStatusUI.Refresh();
+        ActivateMap(code);
     }
 
     // ── Country data from backend ─────────────────────────────────────────────
