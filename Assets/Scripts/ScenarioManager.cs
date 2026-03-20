@@ -33,6 +33,10 @@ public class ScenarioManager : MonoBehaviour
     public TMP_Text kpiHealthScoreText;
     public TMP_Text kpiTotalScoreText;
     public Button reflectionContinueButton;
+    [Tooltip("The GameObject containing all KPI stat fields — hidden until the player taps View Stats")]
+    public GameObject kpiSection;
+    [Tooltip("Button that reveals kpiSection")]
+    public Button viewKpiButton;
 
     // Country event panel
     [Header("Country Event Panel")]
@@ -72,19 +76,6 @@ public class ScenarioManager : MonoBehaviour
 
     void Start() { }
 
-    void OnEnable()
-    {
-        // Fires when this GameObject becomes active — including when MinigameLoader
-        // calls SetMainObjects(true) after the minigame unloads.
-        // If step-3 decisions are waiting, show them now.
-        if (GameManager.Instance == null) return;
-        if (GameManager.Instance.pendingPhase2Step3 == null) return;
-        if (GameManager.Instance.pendingPhase2Step3.Length == 0) return;
-
-        var step3 = GameManager.Instance.pendingPhase2Step3;
-        GameManager.Instance.pendingPhase2Step3 = null;
-        ShowPhase2Step3(step3);
-    }
 
     // Public entry point 
 
@@ -242,19 +233,13 @@ public class ScenarioManager : MonoBehaviour
 
         if (chosenDecision.is_minigame_trigger)
         {
-            GameManager.Instance.pendingPhase2Step3 = step3Decisions;
-
-            // Route through MinigameLoader so the scene loads ADDITIVELY.
-            // A direct LoadScene("Minigame") destroys Main, kills the EventSystem,
-            // and makes the return button unclickable.
-            var loader = FindFirstObjectByType<MinigameLoader>();
-            if (loader != null)
+            if (MinigameManager.Instance != null)
             {
-                loader.loadMinigame();
+                MinigameManager.Instance.OpenMinigame(step3Decisions);
             }
             else
             {
-                Debug.LogError("ScenarioManager: MinigameLoader not found in scene.");
+                Debug.LogError("ScenarioManager: MinigameManager not found.");
             }
         }
         else
@@ -265,10 +250,7 @@ public class ScenarioManager : MonoBehaviour
     }
 
     // Phase 2: Step 3 (spend the earnings)
-
-    /// <summary>Called by MinigameLoader after the minigame scene unloads.</summary>
-    public void ShowStep3AfterMinigame(DecisionData[] step3Decisions)
-        => ShowPhase2Step3(step3Decisions);
+    public void ShowStep3FromMinigame(DecisionData[] step3) => ShowPhase2Step3(step3);
 
     private void ShowPhase2Step3(DecisionData[] step3Decisions)
     {
@@ -344,9 +326,15 @@ public class ScenarioManager : MonoBehaviour
             return;
         }
 
+        // Header (always visible)
         if (reflectionTitleText) reflectionTitleText.text = data.scenario.title;
         if (reflectionDescriptionText) reflectionDescriptionText.text = data.scenario.description;
 
+        // KPI section — hidden until player taps "View Stats"
+        if (kpiSection) kpiSection.SetActive(false);
+        if (reflectionDescriptionText) reflectionDescriptionText.gameObject.SetActive(true);
+
+        // Populate KPI values now so they're ready when revealed
         var gm = GameManager.Instance;
         if (kpiMoneyText) kpiMoneyText.text = "Money: " + gm.FormatMoney(gm.money);
         if (kpiDebtText) kpiDebtText.text = "Debt: " + gm.FormatMoney(gm.debt);
@@ -357,6 +345,19 @@ public class ScenarioManager : MonoBehaviour
         if (kpiSocialScoreText) kpiSocialScoreText.text = "Social Score: " + gm.socialScore;
         if (kpiHealthScoreText) kpiHealthScoreText.text = "Health Score: " + gm.healthScore;
         if (kpiTotalScoreText) kpiTotalScoreText.text = "Total Score: " + gm.totalImpactScore;
+
+        // View Stats button
+        if (viewKpiButton != null)
+        {
+            viewKpiButton.gameObject.SetActive(true);
+            viewKpiButton.onClick.RemoveAllListeners();
+            viewKpiButton.onClick.AddListener(() =>
+            {
+                if (kpiSection) kpiSection.SetActive(true);
+                if (reflectionDescriptionText) reflectionDescriptionText.gameObject.SetActive(false);
+                if (viewKpiButton) viewKpiButton.gameObject.SetActive(false);
+            });
+        }
 
         if (reflectionContinueButton != null)
         {
@@ -503,6 +504,13 @@ public class ScenarioManager : MonoBehaviour
 
     private void ShowFinalOutcomePanel(string outcome)
     {
+        if (FinalResultsUI.Instance != null)
+        {
+            FinalResultsUI.Instance.Show();
+            return;
+        }
+
+        // Fallback
         if (outcomeCanvas == null) { Debug.Log("Final Outcome: " + outcome); return; }
 
         if (outcomeText) outcomeText.text = outcome;

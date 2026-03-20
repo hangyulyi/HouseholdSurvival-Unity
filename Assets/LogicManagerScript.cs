@@ -1,12 +1,6 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Handles minigame scoring and exiting.
-/// returnToMainGame() no longer loads a new scene — it tells MinigameLoader
-/// to unload the Minigame scene additively, which restores Main as-is.
-/// </summary>
 public class LogicManagerScript : MonoBehaviour
 {
     public int playerScore;
@@ -21,11 +15,13 @@ public class LogicManagerScript : MonoBehaviour
         scoreText.text = playerScore.ToString() + "  <sprite=0>";
     }
 
+    /// <summary>Restart button on the game over screen — full clean reset.</summary>
     public void restartGame()
     {
-        // Restart just the minigame scene content — reset score and reload
-        playerScore = 0;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+        if (MinigameManager.Instance != null)
+            MinigameManager.Instance.OpenMinigame();
+        else
+            Debug.LogError("MinigameManager not found.");
     }
 
     public void gameOver()
@@ -40,20 +36,9 @@ public class LogicManagerScript : MonoBehaviour
 
     public void returnToMainGame()
     {
-        // Find the MinigameLoader in the Main scene and tell it to unload us.
-        // This keeps GameManager, all stats, and CountrySelectionController untouched.
-        MinigameLoader loader = FindFirstObjectByType<MinigameLoader>();
-        if (loader != null)
-        {
-            loader.UnloadMinigame();
-        }
+        if (MinigameManager.Instance != null)
+            MinigameManager.Instance.CloseMinigame();
         else
-        {
-            // Fallback: MinigameLoader not found (e.g. testing Minigame scene in isolation).
-            // Mark session active so CountrySelectionController skips the resume prompt.
-            if (GameManager.Instance != null)
-                GameManager.Instance.isSessionActive = true;
-            SceneManager.LoadScene("Main");
-        }
+            Debug.LogError("MinigameManager not found.");
     }
 }

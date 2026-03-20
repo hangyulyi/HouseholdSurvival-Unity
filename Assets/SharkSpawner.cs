@@ -4,36 +4,31 @@ public class SharkSpawner : MonoBehaviour
 {
     public GameObject shark;
     public float spawnRate = 2;
-    private float timer = 0;
     public float heightOffset = 10;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private float _timer = 0;
+
+    // OnEnable fires every time MinigameRoot becomes active — resets timer and spawns immediately
+    void OnEnable()
     {
-        spawnPipe();
+        _timer = 0;
+        SpawnShark();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (timer < spawnRate)
+        _timer += Time.deltaTime;
+        if (_timer >= spawnRate)
         {
-            timer += Time.deltaTime;
-        }
-        else
-        {
-            spawnPipe();
-            timer = 0;
-
+            SpawnShark();
+            _timer = 0;
         }
     }
 
-    void spawnPipe()
+    void SpawnShark()
     {
-        float lowestPoint = transform.position.y - heightOffset;
-        float highestPoint = transform.position.y + heightOffset;
-
-        Instantiate(shark, new Vector3(transform.position.x, Random.Range(lowestPoint, highestPoint), 0), transform.rotation);
-
+        float lo = transform.position.y - heightOffset;
+        float hi = transform.position.y + heightOffset;
+        Instantiate(shark, new Vector3(transform.position.x, Random.Range(lo, hi), 0), transform.rotation);
     }
 }

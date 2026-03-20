@@ -8,26 +8,33 @@ public class SubScript : MonoBehaviour
     public LogicManagerScript logic;
     public bool subIsAlive = true;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private Vector3 _startPosition;
+
+    void Awake()
     {
-        
+        _startPosition = transform.position;
     }
 
-    // Update is called once per frame
+    // OnEnable fires every time the MinigameRoot is shown — resets sub state
+    void OnEnable()
+    {
+        subIsAlive = true;
+        transform.position = _startPosition;
+        if (myRigidbody != null)
+            myRigidbody.linearVelocity = Vector2.zero;
+    }
+
     void Update()
     {
         if (Keyboard.current.spaceKey.wasPressedThisFrame && subIsAlive)
         {
             myRigidbody.linearVelocity = Vector2.up * jumpStrength;
-
         }
-
     }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         logic.gameOver();
         subIsAlive = false;
-
     }
 }

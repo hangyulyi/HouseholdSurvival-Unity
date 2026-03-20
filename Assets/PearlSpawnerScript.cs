@@ -4,36 +4,37 @@ public class PearlSpawnerScript : MonoBehaviour
 {
     public GameObject pearl;
     public float spawnRate = 5;
-    private float timer = 0;
     public float heightOffset = 10;
+    public LogicManagerScript logic;  // assign in Inspector
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private float _timer = 0;
+
+    void OnEnable()
     {
-        spawnPipe();
+        _timer = 0;
+        SpawnPearl();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (timer < spawnRate)
+        _timer += Time.deltaTime;
+        if (_timer >= spawnRate)
         {
-            timer += Time.deltaTime;
-        }
-        else
-        {
-            spawnPipe();
-            timer = 0;
-
+            SpawnPearl();
+            _timer = 0;
         }
     }
 
-    void spawnPipe()
+    void SpawnPearl()
     {
-        float lowestPoint = transform.position.y - heightOffset;
-        float highestPoint = transform.position.y + heightOffset;
+        float lo = transform.position.y - heightOffset;
+        float hi = transform.position.y + heightOffset;
+        var obj = Instantiate(pearl,
+            new Vector3(transform.position.x, Random.Range(lo, hi), 0),
+            transform.rotation);
 
-        Instantiate(pearl, new Vector3(transform.position.x, Random.Range(lowestPoint, highestPoint), 0), transform.rotation);
-
+        // Pass logic reference directly — no tag lookup on the pearl side
+        var trigger = obj.GetComponent<PearlTriggerScript>();
+        if (trigger != null) trigger.logic = logic;
     }
 }

@@ -65,9 +65,12 @@ public class CountryEventData
 [Serializable]
 public class CountryEventWrapper
 {
-    public CountryEventData @event;
+    public CountryEventData @event; 
 }
 
+// ============================================================
+//  SESSION
+// ============================================================
 
 [Serializable]
 public class SessionStartResponse
@@ -89,6 +92,9 @@ public class SessionData
     public string completed_at;
 }
 
+// ============================================================
+//  SCENARIOS & DECISIONS
+// ============================================================
 
 [Serializable]
 public class ScenarioResponse
@@ -206,4 +212,63 @@ public class LeaderboardEntry
     public string email;
     public string country_code;
     public int total_score;
+}
+
+// ============================================================
+//  PROGRESS SUMMARY (GET /api/progress/summary)
+// ============================================================
+
+[Serializable]
+public class ProgressSummaryResponse
+{
+    public PhaseEntry[] phases;
+    public ProgressTotals totals;
+    public SessionSummary session;
+}
+
+[Serializable]
+public class PhaseEntry
+{
+    public int scenario_id;
+    public int phase_number;
+    public string title;
+    public string choice_text;
+    public int economic_score;
+    public int social_score;
+    public int health_score;
+    public int score;
+}
+
+[Serializable]
+public class ProgressTotals
+{
+    public int total_score;
+    public int total_economic;
+    public int total_social;
+    public int total_health;
+}
+
+[Serializable]
+public class SessionSummary
+{
+    public string final_ending;
+    public int total_score;
+    public string country_code;
+    public string character_name;
+}
+
+// ============================================================
+//  WORLD BANK (GET /api/countries/:code/worldbank)
+// ============================================================
+
+[Serializable]
+public class WorldBankResponse
+{
+    public string country_code;
+    public float wb_gni_per_capita;
+    public float wb_life_expectancy;
+    public float wb_poverty_rate;
+    public float wb_health_expenditure;
+    public float wb_education_spending;
+    public string source;
 }

@@ -36,12 +36,12 @@ public class CountrySelectionController : MonoBehaviour
     [Header("Blurb")]
     public TMP_Text countryName;
     public TMP_Text countryBlurb;
-    public TMP_Text difficultyText;     // optional dedicated difficulty label
+    public TMP_Text difficultyText;    
 
     [Header("Confirm Panel")]
     public GameObject confirmPanel;
     public Image selectedFlagImage;
-    public TMP_Text characterNameText; // displays e.g. "Playing as: Lucas"
+    public TMP_Text characterNameText;
 
     [Header("Loading / Error")]
     public GameObject loadingOverlay;
@@ -54,9 +54,8 @@ public class CountrySelectionController : MonoBehaviour
     [Header("Resume Prompt")]
     [Tooltip("Panel shown when a saved session exists. Has Continue and New Game buttons.")]
     public GameObject resumePromptPanel;
-    public TMPro.TMP_Text resumePromptText;   // optional — shows character + country name
+    public TMPro.TMP_Text resumePromptText;
 
-    // ── Fixed character per country (from the schema's intro_text characters) ──
     private static readonly Dictionary<string, string> CharacterNames = new()
     {
         { "br", "Lucas"  },
@@ -66,21 +65,13 @@ public class CountrySelectionController : MonoBehaviour
         { "us", "Thomas" },
     };
 
-    // ── Internal state ────────────────────────────────────────────────────────
+    // Internal state 
     private string _selectedCountry = "Brazil";
 
-    /// <summary>Keyed by backend country_code (br / in / ke / se / us).</summary>
+    // Keyed by backend country_code (br / in / ke / se / us)
     private Dictionary<string, CountryData> _countryDataByCode = new();
 
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // ── Static flag — survives disable/enable and scene reloads ─────────────────
-    // Resets only when ResetGame() is called (new game).
-    private static bool _sessionCheckDone = false;
-
-    public static void ResetSessionCheck() => _sessionCheckDone = false;
-
-    // ─────────────────────────────────────────────────────────────────────────
+    //
 
     void Awake()
     {
@@ -89,22 +80,15 @@ public class CountrySelectionController : MonoBehaviour
 
     void Start()
     {
-        // Only run the session check once per application launch.
-        // This prevents it re-firing when the GameObject is re-enabled
-        // (e.g. after returning from the minigame scene).
-        if (_sessionCheckDone) return;
-        _sessionCheckDone = true;
-
-        // GameManager has a live session — mid-session scene reload (e.g. from minigame).
-        // Go straight to the map, no prompts.
-        if (GameManager.Instance != null && GameManager.Instance.isSessionActive)
+        // If GameManager has an active country, a session is already running.
+        // Skip straight to the map
+        if (GameManager.Instance != null && !string.IsNullOrEmpty(GameManager.Instance.countryCode))
         {
             SkipToMap(GameManager.Instance.countryCode);
             return;
         }
 
-        // No live session but PlayerPrefs has a saved one — app was closed and reopened.
-        // Ask the player whether to continue or start fresh.
+        // No live session. Check PlayerPrefs for a previous run (app reopened).
         string savedCode = PlayerPrefs.GetString("countryCode", "");
         if (!string.IsNullOrEmpty(savedCode))
         {
@@ -112,28 +96,27 @@ public class CountrySelectionController : MonoBehaviour
             return;
         }
 
-        // No session at all — show country selection normally.
+        // Fresh start — show country selection.
         if (loadingOverlay) loadingOverlay.SetActive(true);
-        if (errorText)      errorText.text = "";
+        if (errorText) errorText.text = "";
         StartCoroutine(APIManager.Instance.GetAllCountries(OnCountriesLoaded));
     }
 
-    // ── Resume prompt ─────────────────────────────────────────────────────────
+    // Resume prompt
 
     private void ShowResumePrompt(string savedCode)
     {
         if (resumePromptPanel == null)
         {
-            // No panel — go straight to country selection
             if (loadingOverlay) loadingOverlay.SetActive(true);
-            if (errorText)      errorText.text = "";
+            if (errorText) errorText.text = "";
             StartCoroutine(APIManager.Instance.GetAllCountries(OnCountriesLoaded));
             return;
         }
 
         if (resumePromptText != null)
         {
-            string name  = PlayerPrefs.GetString("playerName", "Player");
+            string name = PlayerPrefs.GetString("playerName", "Player");
             string phase = PlayerPrefs.GetString("savedPhase", "1");
             resumePromptText.text = $"Continue as {name}?\nPhase {phase} / {GameManager.MAX_PHASES}";
         }
@@ -151,9 +134,8 @@ public class CountrySelectionController : MonoBehaviour
 
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.countryCode    = savedCode;
-            GameManager.Instance.playerName     = savedName;
-            GameManager.Instance.isSessionActive = true;
+            GameManager.Instance.countryCode = savedCode;
+            GameManager.Instance.playerName = savedName;
             if (int.TryParse(savedPhaseStr, out int p))
                 GameManager.Instance.phase = p;
         }
@@ -164,14 +146,11 @@ public class CountrySelectionController : MonoBehaviour
     public void OnResumeNewGame()
     {
         if (resumePromptPanel) resumePromptPanel.SetActive(false);
-        _sessionCheckDone = false;
 
         if (GameManager.Instance != null)
         {
             StartCoroutine(APIManager.Instance.ResetProgress(() =>
-            {
-                GameManager.Instance.ResetGame();
-            }));
+                GameManager.Instance.ResetGame()));
         }
         else
         {
@@ -220,7 +199,7 @@ public class CountrySelectionController : MonoBehaviour
         SelectCountry("Brazil");
     }
 
-    // ── Country selection ─────────────────────────────────────────────────────
+    // Country selection
 
     public void SelectCountry(string country)
     {
@@ -265,7 +244,7 @@ public class CountrySelectionController : MonoBehaviour
         }
     }
 
-    // ── Confirm panel ─────────────────────────────────────────────────────────
+    // Confirm panel
 
     public void ShowConfirmPanel()
     {
@@ -349,7 +328,7 @@ public class CountrySelectionController : MonoBehaviour
         ActivateMap(response.country_config.country_code);
     }
 
-    // ── Map helpers ───────────────────────────────────────────────────────────
+    // Map helpers 
 
     public void ActivateMap(string code)
     {
