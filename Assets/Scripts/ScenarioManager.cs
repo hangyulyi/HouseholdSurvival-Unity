@@ -70,16 +70,20 @@ public class ScenarioManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    void Start()
+    void Start() { }
+
+    void OnEnable()
     {
-        // If we just returned from the minigame, show the step-3 decisions (phase 2)
-        if (GameManager.Instance != null &&
-            GameManager.Instance.pendingPhase2Step3 != null &&
-            GameManager.Instance.pendingPhase2Step3.Length > 0)
-        {
-            ShowPhase2Step3(GameManager.Instance.pendingPhase2Step3);
-            GameManager.Instance.pendingPhase2Step3 = null;
-        }
+        // Fires when this GameObject becomes active — including when MinigameLoader
+        // calls SetMainObjects(true) after the minigame unloads.
+        // If step-3 decisions are waiting, show them now.
+        if (GameManager.Instance == null) return;
+        if (GameManager.Instance.pendingPhase2Step3 == null) return;
+        if (GameManager.Instance.pendingPhase2Step3.Length == 0) return;
+
+        var step3 = GameManager.Instance.pendingPhase2Step3;
+        GameManager.Instance.pendingPhase2Step3 = null;
+        ShowPhase2Step3(step3);
     }
 
     // Public entry point 
@@ -238,11 +242,20 @@ public class ScenarioManager : MonoBehaviour
 
         if (chosenDecision.is_minigame_trigger)
         {
-            // run the minigame as step 2"
             GameManager.Instance.pendingPhase2Step3 = step3Decisions;
 
-            Debug.Log("Phase 2: minigame triggered. Step 3 decisions saved for after minigame.");
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Minigame");
+            // Route through MinigameLoader so the scene loads ADDITIVELY.
+            // A direct LoadScene("Minigame") destroys Main, kills the EventSystem,
+            // and makes the return button unclickable.
+            var loader = FindFirstObjectByType<MinigameLoader>();
+            if (loader != null)
+            {
+                loader.loadMinigame();
+            }
+            else
+            {
+                Debug.LogError("ScenarioManager: MinigameLoader not found in scene.");
+            }
         }
         else
         {
@@ -252,6 +265,10 @@ public class ScenarioManager : MonoBehaviour
     }
 
     // Phase 2: Step 3 (spend the earnings)
+
+    /// <summary>Called by MinigameLoader after the minigame scene unloads.</summary>
+    public void ShowStep3AfterMinigame(DecisionData[] step3Decisions)
+        => ShowPhase2Step3(step3Decisions);
 
     private void ShowPhase2Step3(DecisionData[] step3Decisions)
     {

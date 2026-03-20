@@ -45,6 +45,13 @@ public class GameManager : MonoBehaviour
     // On return, ScenarioManager.Start() picks them up and shows them.
     [HideInInspector] public DecisionData[] pendingPhase2Step3 = null;
 
+    /// <summary>
+    /// True once a session has been started via InitialiseFromCountryConfig.
+    /// Cleared by ResetGame. Used by CountrySelectionController to distinguish
+    /// "mid-session scene reload" from "app reopened with saved PlayerPrefs".
+    /// </summary>
+    [HideInInspector] public bool isSessionActive = false;
+
     // ── UI event ──────────────────────────────────────────────────────────────
     public UnityEvent onStatsChanged = new UnityEvent();
 
@@ -87,8 +94,10 @@ public class GameManager : MonoBehaviour
         finalOutcome = "";
 
         // Persist so CountrySelectionController can read it after a scene reload
+        isSessionActive = true;
         PlayerPrefs.SetString("countryCode", countryCode);
         PlayerPrefs.SetString("playerName", playerName);
+        PlayerPrefs.SetString("savedPhase", phase.ToString());
         PlayerPrefs.Save();
 
         onStatsChanged.Invoke();
@@ -131,6 +140,8 @@ public class GameManager : MonoBehaviour
     public void NextPhase()
     {
         if (phase < MAX_PHASES) phase++;
+        PlayerPrefs.SetString("savedPhase", phase.ToString());
+        PlayerPrefs.Save();
         onStatsChanged.Invoke();
     }
 
@@ -199,7 +210,9 @@ public class GameManager : MonoBehaviour
         economicScore = socialScore = healthScore = environmentalScore = totalImpactScore = 0;
         finalOutcome = "";
         pendingPhase2Step3 = null;
+        isSessionActive = false;
         PlayerPrefs.DeleteKey("countryCode");
+        PlayerPrefs.DeleteKey("savedPhase");
         PlayerPrefs.DeleteKey("playerName");
         PlayerPrefs.Save();
         UnityEngine.SceneManagement.SceneManager.LoadScene("Main");

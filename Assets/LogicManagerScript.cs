@@ -1,8 +1,12 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
+/// <summary>
+/// Handles minigame scoring and exiting.
+/// returnToMainGame() no longer loads a new scene — it tells MinigameLoader
+/// to unload the Minigame scene additively, which restores Main as-is.
+/// </summary>
 public class LogicManagerScript : MonoBehaviour
 {
     public int playerScore;
@@ -19,7 +23,9 @@ public class LogicManagerScript : MonoBehaviour
 
     public void restartGame()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        // Restart just the minigame scene content — reset score and reload
+        playerScore = 0;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
     }
 
     public void gameOver()
@@ -27,7 +33,6 @@ public class LogicManagerScript : MonoBehaviour
         finalScore.text = "<sprite=0>Collected:  " + playerScore.ToString();
         gameOverSceen.SetActive(true);
 
-        // Convert pearls collected to money and apply to GameManager
         int moneyEarned = playerScore * 5;
         if (GameManager.Instance != null)
             GameManager.Instance.AddMoney(moneyEarned);
@@ -35,10 +40,20 @@ public class LogicManagerScript : MonoBehaviour
 
     public void returnToMainGame()
     {
-        // LoadScene("Main") is safe — GameManager is DontDestroyOnLoad so
-        // countryCode and all stats survive the scene transition.
-        // CountrySelectionController.Start() detects the saved countryCode
-        // and skips straight to the map rather than showing country selection.
-        SceneManager.LoadScene("Main");
+        // Find the MinigameLoader in the Main scene and tell it to unload us.
+        // This keeps GameManager, all stats, and CountrySelectionController untouched.
+        MinigameLoader loader = FindFirstObjectByType<MinigameLoader>();
+        if (loader != null)
+        {
+            loader.UnloadMinigame();
+        }
+        else
+        {
+            // Fallback: MinigameLoader not found (e.g. testing Minigame scene in isolation).
+            // Mark session active so CountrySelectionController skips the resume prompt.
+            if (GameManager.Instance != null)
+                GameManager.Instance.isSessionActive = true;
+            SceneManager.LoadScene("Main");
+        }
     }
 }
