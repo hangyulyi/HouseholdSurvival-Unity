@@ -14,7 +14,7 @@ public class APIManager : MonoBehaviour
     public static APIManager Instance;
 
     // ── Change to your deployed URL when hosting the backend ──
-    [SerializeField] private string baseUrl = "http://localhost:3000";
+    [SerializeField] private string baseUrl = "https://household-survival-production.up.railway.app/";
 
     void Awake()
     {
