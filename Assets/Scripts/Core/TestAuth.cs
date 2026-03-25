@@ -8,8 +8,8 @@ public class DevAuthHelper : MonoBehaviour
 {
 #if UNITY_EDITOR
     [Header("Test Credentials (Editor only — never ships)")]
-    public string testEmail = "test@example.com";
-    public string testPassword = "password123";
+    public string testEmail = "didumb3@gmail.com";
+    public string testPassword = "password";
 
     [Tooltip("Tick this to skip auto-login (useful if you already have a token from a previous run)")]
     public bool skipIfTokenExists = true;

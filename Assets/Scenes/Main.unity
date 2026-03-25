@@ -31015,7 +31015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c49b65b5dbdfcc54284b0e9a474f7f19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::APIManager
-  baseUrl: http://localhost:3000
+  baseUrl: https://household-survival-production.up.railway.app
 --- !u!4 &1820250267
 Transform:
   m_ObjectHideFlags: 0

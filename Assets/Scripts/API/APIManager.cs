@@ -3,22 +3,20 @@ using System.Collections;
 using UnityEngine.Networking;
 using System.Text;
 
-/// <summary>
-/// Singleton HTTP client for the Household Survival backend.
-/// React handles login and stores the JWT + userId in PlayerPrefs before loading the Unity scene.
-/// Expected PlayerPrefs keys:  "token"  (JWT string)
-///                              "userId" (int as string)
-/// </summary>
+// Singleton HTTP client for the Household Survival backend.
+// React handles login and stores the JWT + userId in PlayerPrefs before loading the Unity scene.
+// Expected PlayerPrefs keys:  "token"  (JWT string)
+//                             "userId" (int as string)
+
 public class APIManager : MonoBehaviour
 {
     public static APIManager Instance;
 
-    // ── Change to your deployed URL when hosting the backend ──
-    [SerializeField] private string baseUrl = "https://household-survival-production.up.railway.app/";
+
+    [SerializeField] private string baseUrl = "https://household-survival-production.up.railway.app";
 
     void Awake()
     {
-        // DontDestroyOnLoad only works on root GameObjects.
         transform.SetParent(null);
 
         if (Instance == null)
@@ -32,7 +30,7 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    // ── Auth helpers ─────────────────────────────────────────────────────────
+    // Auth helpers
 
     private string GetToken() => PlayerPrefs.GetString("token", "");
 
