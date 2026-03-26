@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using SimpleJSON;
 
 /// <summary>
 /// Handles the country selection screen.
@@ -185,15 +186,36 @@ public class CountrySelectionController : MonoBehaviour
 
         try
         {
-            var response = JsonUtility.FromJson<CountriesResponse>(json);
-            if (response?.countries != null)
-                foreach (var c in response.countries)
-                    _countryDataByCode[c.country_code] = c;
+            // Use SimpleJSON instead of JsonUtility — handles nulls and root arrays
+            var root = SimpleJSON.JSON.Parse(json);
+            // Handle both {"countries":[...]} and [...] shapes
+            var arr = root.IsArray ? root.AsArray : root["countries"].AsArray;
+
+            foreach (SimpleJSON.JSONNode node in arr)
+            {
+                var c = new CountryData
+                {
+                    country_code = node["country_code"],
+                    country_name = node["country_name"],
+                    flag_emoji = node["flag_emoji"],
+                    starting_money = node["starting_money"].AsInt,
+                    starting_health = node["starting_health"].AsInt,
+                    starting_stress = node["starting_stress"].AsInt,
+                    starting_happiness = node["starting_happiness"].AsInt,
+                    starting_debt = node["starting_debt"].AsInt,
+                    healthcare_cost_mult = node["healthcare_cost_mult"].AsFloat,
+                    education_access_mult = node["education_access_mult"].AsFloat,
+                    safety_net_mult = node["safety_net_mult"].AsFloat,
+                    difficulty_label = node["difficulty_label"],
+                    intro_text = node["intro_text"],
+                };
+                _countryDataByCode[c.country_code] = c;
+            }
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning("CountrySelectionController: could not load country data — " +
-                             "falling back to placeholder text.\n" + e.Message);
+            Debug.LogError("OnCountriesLoaded parse failed: " + e.Message + "\nRaw: " + json);
+            if (errorText) errorText.text = "Failed to load country data.";
         }
 
         SelectCountry("Brazil");

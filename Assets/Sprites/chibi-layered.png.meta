@@ -1,0 +1,689 @@
+fileFormatVersion: 2
+guid: 838729d630a559a4da107fcd47bc7c25
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5845835507735083389
+    second: chibi-layered_0
+  - first:
+      213: -1112729367974562650
+    second: chibi-layered_1
+  - first:
+      213: -997956132385722387
+    second: chibi-layered_2
+  - first:
+      213: 6669552830547885389
+    second: chibi-layered_3
+  - first:
+      213: -1897858651997141559
+    second: chibi-layered_4
+  - first:
+      213: -7061416306764853186
+    second: chibi-layered_5
+  - first:
+      213: -315552387713334887
+    second: chibi-layered_6
+  - first:
+      213: 3700627191134711703
+    second: chibi-layered_7
+  - first:
+      213: 4343197933428616938
+    second: chibi-layered_8
+  - first:
+      213: -2678350249093484843
+    second: chibi-layered_9
+  - first:
+      213: -6002964593973502238
+    second: chibi-layered_10
+  - first:
+      213: 3398754836679955668
+    second: chibi-layered_11
+  - first:
+      213: 3150525731743835657
+    second: chibi-layered_12
+  - first:
+      213: 1268309249231162714
+    second: chibi-layered_13
+  - first:
+      213: 8736200731859618644
+    second: chibi-layered_14
+  - first:
+      213: -8951461031040666709
+    second: chibi-layered_15
+  - first:
+      213: 2330240754134878772
+    second: chibi-layered_16
+  - first:
+      213: -740411767325681505
+    second: chibi-layered_17
+  - first:
+      213: 1877875522428308166
+    second: chibi-layered_18
+  - first:
+      213: 5486073191296581014
+    second: chibi-layered_19
+  - first:
+      213: 1487620971297919808
+    second: chibi-layered_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: chibi-layered_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d793ae5fb64902150800000000000000
+      internalID: 5845835507735083389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_1
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 0
+        width: 15
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a43bba098ace80f0800000000000000
+      internalID: -1112729367974562650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: defe9bb5f2c8622f0800000000000000
+      internalID: -997956132385722387
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_3
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 31
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4df18b66f20f8c50800000000000000
+      internalID: 6669552830547885389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_4
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 15
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c50fcd7c9379a5e0800000000000000
+      internalID: -1897858651997141559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_5
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 31
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e305120384fc00e90800000000000000
+      internalID: -7061416306764853186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_6
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 15
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 991025676ceee9bf0800000000000000
+      internalID: -315552387713334887
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_7
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 31
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79f6cb5d2d44b5330800000000000000
+      internalID: 3700627191134711703
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_8
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 15
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aee293b5283264c30800000000000000
+      internalID: 4343197933428616938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_9
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 31
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5de24b293a694dad0800000000000000
+      internalID: -2678350249093484843
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_10
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 15
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ee56f0c18f21bca0800000000000000
+      internalID: -6002964593973502238
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_11
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 31
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d413fe348dca2f20800000000000000
+      internalID: 3398754836679955668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_12
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 15
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 906a158f57ae8bb20800000000000000
+      internalID: 3150525731743835657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_13
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 31
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5d04c9da80f99110800000000000000
+      internalID: 1268309249231162714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_14
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 15
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45b000d77483d3970800000000000000
+      internalID: 8736200731859618644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_15
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 0
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba3b1108e9506c380800000000000000
+      internalID: -8951461031040666709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_16
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 0
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43a0957ae9da65020800000000000000
+      internalID: 2330240754134878772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_17
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 0
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f989805ab6789b5f0800000000000000
+      internalID: -740411767325681505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_18
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 0
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ca8db696dd8f0a10800000000000000
+      internalID: 1877875522428308166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_19
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 0
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69db6034082722c40800000000000000
+      internalID: 5486073191296581014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chibi-layered_20
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 0
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04352a2446715a410800000000000000
+      internalID: 1487620971297919808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      chibi-layered_0: 5845835507735083389
+      chibi-layered_1: -1112729367974562650
+      chibi-layered_10: -6002964593973502238
+      chibi-layered_11: 3398754836679955668
+      chibi-layered_12: 3150525731743835657
+      chibi-layered_13: 1268309249231162714
+      chibi-layered_14: 8736200731859618644
+      chibi-layered_15: -8951461031040666709
+      chibi-layered_16: 2330240754134878772
+      chibi-layered_17: -740411767325681505
+      chibi-layered_18: 1877875522428308166
+      chibi-layered_19: 5486073191296581014
+      chibi-layered_2: -997956132385722387
+      chibi-layered_20: 1487620971297919808
+      chibi-layered_3: 6669552830547885389
+      chibi-layered_4: -1897858651997141559
+      chibi-layered_5: -7061416306764853186
+      chibi-layered_6: -315552387713334887
+      chibi-layered_7: 3700627191134711703
+      chibi-layered_8: 4343197933428616938
+      chibi-layered_9: -2678350249093484843
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
