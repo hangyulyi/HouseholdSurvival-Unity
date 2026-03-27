@@ -99,6 +99,8 @@ public class ScenarioManager : MonoBehaviour
                 OnScenarioLoaded
             )
         );
+
+        Debug.Log("Starting scenario for phase: " + phase);
     }
 
     // Scenario loaded 
@@ -376,7 +378,10 @@ public class ScenarioManager : MonoBehaviour
         var decision = data.decisions != null && data.decisions.Length > 0
             ? data.decisions[0] : null;
 
-        if (decision == null) { AdvancePhase(); return; }
+        if (decision == null) { 
+            AdvancePhase(); 
+            return; 
+        }
 
         StartCoroutine(
             APIManager.Instance.SubmitDecision(
