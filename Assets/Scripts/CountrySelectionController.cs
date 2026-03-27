@@ -4,13 +4,12 @@ using TMPro;
 using System.Collections.Generic;
 using SimpleJSON;
 
-/// <summary>
-/// Handles the country selection screen.
-/// On Start it fetches all country data from GET /api/countries (public, no auth needed)
-/// and uses the real intro_text and difficulty_label from the database for each blurb.
-/// Each country has a fixed character — the player does not enter their own name.
-/// On ConfirmSelection it calls POST /api/sessions/start to initialise the session.
-/// </summary>
+
+// Handles the country selection screen.
+// On Start it fetches all country data from GET /api/countries (public, no auth needed)
+// and uses the real intro_text and difficulty_label from the database for each blurb.
+// On ConfirmSelection it calls POST /api/sessions/start to initialise the session.
+
 public class CountrySelectionController : MonoBehaviour
 {
     [Header("Flag Buttons")]
@@ -91,13 +90,14 @@ public class CountrySelectionController : MonoBehaviour
 
         // No live session. Check PlayerPrefs for a previous run (app reopened).
         string savedCode = PlayerPrefs.GetString("countryCode", "");
-        if (!string.IsNullOrEmpty(savedCode))
+        bool prevGameCompleted = PlayerPrefs.GetString("gameCompleted", "") == "true";
+        if (!string.IsNullOrEmpty(savedCode) && !prevGameCompleted)
         {
             ShowResumePrompt(savedCode);
             return;
         }
 
-        // Fresh start — show country selection.
+        // Fresh start, show country selection.
         if (loadingOverlay) loadingOverlay.SetActive(true);
         if (errorText) errorText.text = "";
         StartCoroutine(APIManager.Instance.GetAllCountries(OnCountriesLoaded));
@@ -158,6 +158,7 @@ public class CountrySelectionController : MonoBehaviour
             PlayerPrefs.DeleteKey("countryCode");
             PlayerPrefs.DeleteKey("playerName");
             PlayerPrefs.DeleteKey("savedPhase");
+            PlayerPrefs.DeleteKey("gameCompleted");
             PlayerPrefs.Save();
             UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
         }
@@ -186,7 +187,6 @@ public class CountrySelectionController : MonoBehaviour
 
         try
         {
-            // Use SimpleJSON instead of JsonUtility — handles nulls and root arrays
             var root = SimpleJSON.JSON.Parse(json);
             // Handle both {"countries":[...]} and [...] shapes
             var arr = root.IsArray ? root.AsArray : root["countries"].AsArray;
@@ -297,11 +297,9 @@ public class CountrySelectionController : MonoBehaviour
         confirmPanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Confirms the country choice. Uses the fixed character name for the selected country
-    /// rather than a player-entered name.
-    /// Requires a valid JWT in PlayerPrefs["token"] — set by React login, or DevAuthHelper in the Editor.
-    /// </summary>
+    // Confirms the country choice
+    // Requires a valid JWT in PlayerPrefs["token"] — set by React login, or DevAuthHelper in the Editor.
+
     public void ConfirmSelection()
     {
         string code = GameManager.NameToCode(_selectedCountry);

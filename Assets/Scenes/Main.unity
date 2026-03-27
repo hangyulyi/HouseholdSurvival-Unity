@@ -13664,7 +13664,7 @@ MonoBehaviour:
   onStatsChanged:
     m_PersistentCalls:
       m_Calls: []
-  moneyScaleFactor: 5
+  moneyScaleFactor: 1
 --- !u!4 &866629829
 Transform:
   m_ObjectHideFlags: 0

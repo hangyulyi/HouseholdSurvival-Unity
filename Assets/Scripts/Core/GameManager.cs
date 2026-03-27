@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
-/// <summary>
-/// Central game state. Persists across scenes.
-/// Starting stats are populated from the backend when a session begins.
-/// </summary>
+
+// Central game state. Persists across scenes.
+// Starting stats are populated from the backend when a session begins.
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
@@ -48,14 +48,14 @@ public class GameManager : MonoBehaviour
     // UI event 
     public UnityEvent onStatsChanged = new UnityEvent();
 
-    /// <summary>
-    /// Multiplier applied to economic_score when updating the displayed money value.
-    /// economic_score values range roughly -20 to +20 — without scaling this is
-    /// nearly invisible against a starting_money of 90–600.
-    /// Default of 5 makes each decision feel like a meaningful money swing.
-    /// </summary>
+
+    // Multiplier applied to economic_score when updating the displayed money value.
+    // economic_score values range roughly -20 to +20 — without scaling this is
+    // nearly invisible against a starting_money of 90–600.
+    // Default of 5 makes each decision feel like a meaningful money swing.
+
     [Tooltip("How much each economic score point moves the displayed money amount")]
-    public int moneyScaleFactor = 5;
+    public int moneyScaleFactor = 1;
 
 
     void Awake()
@@ -89,13 +89,13 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetString("countryCode", countryCode);
         PlayerPrefs.SetString("playerName", playerName);
         PlayerPrefs.SetString("savedPhase", "1");
+        PlayerPrefs.DeleteKey("gameCompleted");
         PlayerPrefs.Save();
 
         onStatsChanged.Invoke();
     }
 
     // Score application 
-
     public void ApplyAdjustedScores(AdjustedScores scores)
     {
         economicScore += scores.economic_score;
@@ -104,7 +104,7 @@ public class GameManager : MonoBehaviour
         environmentalScore += scores.environmental_score;
         totalImpactScore += scores.impact_score;
 
-        money = Mathf.Clamp(money + scores.economic_score * moneyScaleFactor, 0, 99999);
+        money = Mathf.Clamp(money + scores.economic_score * moneyScaleFactor, -99999, 99999);
         health = Mathf.Clamp(health + scores.health_score, 0, 100);
         happiness = Mathf.Clamp(happiness + scores.social_score, 0, 100);
         stress = Mathf.Clamp(stress - scores.social_score / 2, 0, 100);
@@ -119,7 +119,7 @@ public class GameManager : MonoBehaviour
         healthScore += delta.health;
         totalImpactScore += delta.impact;
 
-        money = Mathf.Clamp(money + delta.economic * moneyScaleFactor, 0, 99999);
+        money = Mathf.Clamp(money + delta.economic * moneyScaleFactor, -99999, 99999);
         health = Mathf.Clamp(health + delta.health, 0, 100);
         happiness = Mathf.Clamp(happiness + delta.social, 0, 100);
 
@@ -130,7 +130,11 @@ public class GameManager : MonoBehaviour
 
     public void NextPhase()
     {
-        if (phase < MAX_PHASES) phase++;
+        if (phase > MAX_PHASES)
+        {
+            return;
+        }
+        phase++;
         PlayerPrefs.SetString("savedPhase", phase.ToString());
         PlayerPrefs.Save();
         onStatsChanged.Invoke();
@@ -151,7 +155,21 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public string FormatMoney(int amount)
     {
-        return countryCode switch
+        // handle negative
+        if (amount < 0)
+        {
+            int abs = Mathf.Abs(amount);
+            return countryCode switch
+            {
+                "us" => $"-${abs}",
+                "br" => $"-R${abs}",
+                "in" => $"-₹{abs}",
+                "ke" => $"-KSh{abs}",
+                "se" => $"-{abs} kr",
+                _ => $"-${abs}"
+            };
+        }
+            return countryCode switch
         {
             "us" => $"${amount}",
             "br" => $"R${amount}",
@@ -179,7 +197,7 @@ public class GameManager : MonoBehaviour
 
     public void AddMoney(int amount)
     {
-        money = Mathf.Clamp(money + amount, 0, 99999);
+        money = Mathf.Clamp(money + amount, -99999, 99999);
         onStatsChanged.Invoke();
     }
 
@@ -203,6 +221,7 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.DeleteKey("countryCode");
         PlayerPrefs.DeleteKey("savedPhase");
         PlayerPrefs.DeleteKey("playerName");
+        PlayerPrefs.DeleteKey("gameCompleted");
         PlayerPrefs.Save();
         UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
     }

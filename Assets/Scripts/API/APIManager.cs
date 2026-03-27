@@ -206,7 +206,12 @@ public class APIManager : MonoBehaviour
         if (req.result == UnityWebRequest.Result.Success)
             callback(req.downloadHandler.text);
         else
+        {
             Debug.LogError("GetProgressSummary failed: " + req.error);
+            callback?.Invoke(null);
+        }
+            
+            
     }
 
     // GET /api/countries/:code/worldbank  live World Bank indicators
@@ -217,7 +222,11 @@ public class APIManager : MonoBehaviour
         if (req.result == UnityWebRequest.Result.Success)
             callback(req.downloadHandler.text);
         else
+        {
             Debug.LogError("GetWorldBankData failed: " + req.error);
+            callback?.Invoke(null);
+        }
+            
     }
 
 }

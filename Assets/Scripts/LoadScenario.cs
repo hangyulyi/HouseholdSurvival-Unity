@@ -57,6 +57,13 @@ public class LoadScenario : MonoBehaviour
             return;
         }
 
+        if (PlayerPrefs.GetString("gameCompleted") == "true")
+        {
+            Debug.Log("Game already completed — showing final UI again.");
+
+            return;
+        }
+
         ScenarioManager.Instance.StartScenario();
     }
 }

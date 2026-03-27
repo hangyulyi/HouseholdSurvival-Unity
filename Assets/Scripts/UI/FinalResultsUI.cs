@@ -4,9 +4,9 @@ using TMPro;
 using System.Collections;
 
 
-/// Populates the final results screen by calling:
-///   GET /api/progress/summary   per-phase decisions, totals, session outcome
-///   GET /api/countries/:code/worldbank  live World Bank indicators
+// Populates the final results screen by calling:
+//   GET /api/progress/summary   per-phase decisions, totals, session outcome
+//   GET /api/countries/:code/worldbank  live World Bank indicators
 
 public class FinalResultsUI : MonoBehaviour
 {
@@ -69,6 +69,9 @@ public class FinalResultsUI : MonoBehaviour
         if (outcomePanel) outcomePanel.SetActive(true);
         if (loadingOverlay) loadingOverlay.SetActive(true);
 
+        PlayerPrefs.SetString("gameCompleted", "true");
+        PlayerPrefs.Save();
+
         // Clear previous phase rows
         if (phaseRowContainer != null)
             foreach (Transform child in phaseRowContainer)
@@ -105,6 +108,12 @@ public class FinalResultsUI : MonoBehaviour
 
     private void PopulateSummary(string json)
     {
+        if (string.IsNullOrEmpty(json))
+        {
+            if (outcomeLabel) outcomeLabel.text = GameManager.Instance?.finalOutcome;
+            return;
+        }
+
         ProgressSummaryResponse data;
         try { data = JsonUtility.FromJson<ProgressSummaryResponse>(json); }
         catch { Debug.LogError("FinalResultsUI: failed to parse summary\n" + json); return; }
@@ -112,12 +121,12 @@ public class FinalResultsUI : MonoBehaviour
         if (data == null) return;
 
         //  Outcome header 
-        string ending = data.session?.final_ending
-                     ?? GameManager.Instance?.finalOutcome
-                     ?? "Game Over";
+        string ending = (data != null && data.session != null && !string.IsNullOrEmpty(data.session.final_ending))
+                    ? data.session.final_ending
+                    : GameManager.Instance?.finalOutcome ?? "Game Over";
 
         if (outcomeLabel) outcomeLabel.text = ending;
-        if (finalScoreLabel) finalScoreLabel.text = "Final Score: " + (data.totals?.total_score ?? 0);
+        if (finalScoreLabel) finalScoreLabel.text = "Final Score: " + (GameManager.Instance?.totalImpactScore ?? 0);
 
         // Tint outcome label by result
         if (outcomeLabel)

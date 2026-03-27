@@ -2,11 +2,11 @@
 using TMPro;
 using UnityEngine.UI;
 
-/// <summary>
-/// Displays live player stats from GameManager.
-/// Subscribes to GameManager.onStatsChanged — updates automatically after every
-/// backend response without needing to poll in Update.
-/// </summary>
+
+// Displays live player stats from GameManager.
+// Subscribes to GameManager.onStatsChanged — updates automatically after every
+// backend response without needing to poll in Update.
+
 public class PlayerStatusUI : MonoBehaviour
 {
     [Header("Identity")]
@@ -53,7 +53,6 @@ public class PlayerStatusUI : MonoBehaviour
     [Range(0, 100)] public int happyThreshold = 70;
     [Range(0, 100)] public int happyMaxStress = 40;
 
-    // ─────────────────────────────────────────────────────────────────────────
 
     void OnEnable()
     {
@@ -69,7 +68,10 @@ public class PlayerStatusUI : MonoBehaviour
 
     void Start()
     {
-        if (moneyText) _defaultMoneyFont = moneyText.font;
+        if (moneyText)
+        {
+            _defaultMoneyFont = moneyText.font;
+        }
         Refresh();
     }
 
@@ -96,7 +98,10 @@ public class PlayerStatusUI : MonoBehaviour
                 debtText.font = moneyText.font;
         }
 
-        if (moneyText) moneyText.text = gm.FormatMoney(gm.money);
+        if (moneyText)
+        {
+            moneyText.text = gm.FormatMoney(gm.money);
+        }
         if (debtText) debtText.text = "Debt: " + gm.FormatMoney(gm.debt);
         if (healthText) healthText.text = "Health: " + gm.health;
         if (stressText) stressText.text = "Stress: " + gm.stress;
