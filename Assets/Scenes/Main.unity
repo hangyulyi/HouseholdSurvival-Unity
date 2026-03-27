@@ -20535,7 +20535,7 @@ MonoBehaviour:
   sadSprite: {fileID: 7985529820856463577, guid: 564eacee0b8791a4cb65a6443bacd27d, type: 3}
   sickSprite: {fileID: 6382504365051344666, guid: 564eacee0b8791a4cb65a6443bacd27d, type: 3}
   tiredSprite: {fileID: -3227592534863981845, guid: 564eacee0b8791a4cb65a6443bacd27d, type: 3}
-  rupeeFont: {fileID: 0}
+  rupeeFont: {fileID: 11400000, guid: ba51da435896c7a419af92cc9543c11b, type: 2}
   sickThreshold: 30
   tiredThreshold: 70
   sadThreshold: 30

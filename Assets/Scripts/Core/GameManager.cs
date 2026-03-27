@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
-
+using TMPro;
 
 // Central game state. Persists across scenes.
 // Starting stats are populated from the backend when a session begins.
@@ -186,7 +186,7 @@ public class GameManager : MonoBehaviour
         {
             "us" => "$",
             "br" => "R$",
-            "in" => "₹",
+            "in" => "\u20B9",
             "ke" => "KSh",
             "se" => "kr",
             _ => "$"
