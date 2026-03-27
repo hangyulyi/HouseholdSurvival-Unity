@@ -4012,10 +4012,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e8103f265213b74a8a6de3f4b80af67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestAuth
-  testEmail: test@example.com
-  testPassword: password123
+  testEmail: didumb3@gmail.com
+  testPassword: password
   skipIfTokenExists: 0
-  baseUrl: http://localhost:3000
+  baseUrl: https://household-survival-production.up.railway.app
 --- !u!4 &425448819
 Transform:
   m_ObjectHideFlags: 0
@@ -4676,7 +4676,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 595807681}
   m_FillRect: {fileID: 1354594422}
   m_HandleRect: {fileID: 595807680}
@@ -13664,7 +13664,7 @@ MonoBehaviour:
   onStatsChanged:
     m_PersistentCalls:
       m_Calls: []
-  moneyScaleFactor: 5
+  moneyScaleFactor: 1
 --- !u!4 &866629829
 Transform:
   m_ObjectHideFlags: 0
@@ -20381,7 +20381,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1725345840}
   m_FillRect: {fileID: 1216676963}
   m_HandleRect: {fileID: 1725345839}
@@ -20471,7 +20471,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1274652239}
   m_FillRect: {fileID: 586390046}
   m_HandleRect: {fileID: 1274652238}
@@ -20535,7 +20535,7 @@ MonoBehaviour:
   sadSprite: {fileID: 7985529820856463577, guid: 564eacee0b8791a4cb65a6443bacd27d, type: 3}
   sickSprite: {fileID: 6382504365051344666, guid: 564eacee0b8791a4cb65a6443bacd27d, type: 3}
   tiredSprite: {fileID: -3227592534863981845, guid: 564eacee0b8791a4cb65a6443bacd27d, type: 3}
-  rupeeFont: {fileID: 0}
+  rupeeFont: {fileID: 11400000, guid: ba51da435896c7a419af92cc9543c11b, type: 2}
   sickThreshold: 30
   tiredThreshold: 70
   sadThreshold: 30
@@ -22515,6 +22515,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   moveSpeed: 5
+  useBounds: 1
+  boundsMinX: -20
+  boundsMaxX: 1
+  boundsMinY: -4.5
+  boundsMaxY: 0
 --- !u!114 &1293100314
 MonoBehaviour:
   m_ObjectHideFlags: 0

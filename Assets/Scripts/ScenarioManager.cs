@@ -67,6 +67,8 @@ public class ScenarioManager : MonoBehaviour
     private ScenarioResponse _currentResponse;
     private CountryEventData _pendingEvent;
 
+    private bool _gameCompleted = false;
+
 
     void Awake()
     {
@@ -81,6 +83,12 @@ public class ScenarioManager : MonoBehaviour
 
     public void StartScenario()
     {
+        if(_gameCompleted)
+        {
+            Debug.Log("ScenarioManager: game already completed");
+            return;
+        }
+
         int phase = GameManager.Instance.phase;
 
         if (phase > GameManager.MAX_PHASES)
@@ -99,6 +107,8 @@ public class ScenarioManager : MonoBehaviour
                 OnScenarioLoaded
             )
         );
+
+        Debug.Log("Starting scenario for phase: " + phase);
     }
 
     // Scenario loaded 
@@ -124,7 +134,7 @@ public class ScenarioManager : MonoBehaviour
 
         if (phase == 2) DisplayPhase2Step1(_currentResponse);
         else if (phase == 6) ShowReflectionPanel(_currentResponse);
-        else if (phase == 7) AutoSubmitPhase7(_currentResponse);
+        else if (phase == 7) ShowFinalOutcomePanel(null);
         else DisplayScenario(_currentResponse);
     }
 
@@ -334,7 +344,7 @@ public class ScenarioManager : MonoBehaviour
         if (kpiSection) kpiSection.SetActive(false);
         if (reflectionDescriptionText) reflectionDescriptionText.gameObject.SetActive(true);
 
-        // Populate KPI values now so they're ready when revealed
+        // Populate KPI values
         var gm = GameManager.Instance;
         if (kpiMoneyText) kpiMoneyText.text = "Money: " + gm.FormatMoney(gm.money);
         if (kpiDebtText) kpiDebtText.text = "Debt: " + gm.FormatMoney(gm.debt);
@@ -376,7 +386,10 @@ public class ScenarioManager : MonoBehaviour
         var decision = data.decisions != null && data.decisions.Length > 0
             ? data.decisions[0] : null;
 
-        if (decision == null) { AdvancePhase(); return; }
+        if (decision == null) { 
+            AdvancePhase(); 
+            return; 
+        }
 
         StartCoroutine(
             APIManager.Instance.SubmitDecision(
@@ -416,15 +429,43 @@ public class ScenarioManager : MonoBehaviour
         if (loadingOverlay) loadingOverlay.SetActive(false);
 
         DecisionSubmitResponse response;
-        try { response = JsonUtility.FromJson<DecisionSubmitResponse>(json); }
-        catch (System.Exception e) { Debug.LogError("Phase 7 parse error: " + e.Message); return; }
+        try
+        {
+            response = JsonUtility.FromJson<DecisionSubmitResponse>(json);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Phase 7 parse error: " + e.Message);
+            return;
+        }
+
+        _gameCompleted = true;
 
         GameManager.Instance.ApplyAdjustedScores(response.adjusted_scores);
 
         string outcome = response.final_outcome ?? "Game Over";
         GameManager.Instance.finalOutcome = outcome;
+
+        DisableProceedButtons();
+
         ShowFinalOutcomePanel(outcome);
     }
+
+    private void DisableProceedButtons()
+    {
+        var loaders = FindObjectsOfType<LoadScenario>();
+
+        foreach (var l in loaders)
+        {
+            var btn = l.GetComponent<UnityEngine.UI.Button>();
+            if (btn != null)
+            {
+                btn.interactable = false;
+            }
+        }
+    }
+
+
 
     // Country event
 
@@ -500,22 +541,92 @@ public class ScenarioManager : MonoBehaviour
 
     // Helpers
 
+    private IEnumerator AutoSubmitPhase7Routine()
+    {
+        var decision = _currentResponse.decisions != null && _currentResponse.decisions.Length > 0
+            ? _currentResponse.decisions[0]
+            : null;
+
+        if (decision == null)
+        {
+            Debug.LogError("No decision for phase 7");
+            yield break;
+        }
+
+        bool done = false;
+        string resultJson = null;
+
+        yield return StartCoroutine(
+            APIManager.Instance.SubmitDecision(
+                decision.decision_id,
+                decision.scenario_id,
+                GameManager.Instance.countryCode,
+                (json) =>
+                {
+                    resultJson = json;
+                    done = true;
+                }
+            )
+        );
+
+        if (!done) yield break;
+
+        DecisionSubmitResponse response;
+        try
+        {
+            response = JsonUtility.FromJson<DecisionSubmitResponse>(resultJson);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Phase 7 parse error: " + e.Message);
+            yield break;
+        }
+
+        _gameCompleted = true;
+
+        GameManager.Instance.ApplyAdjustedScores(response.adjusted_scores);
+
+        string outcome = response.final_outcome ?? "Game Over";
+        GameManager.Instance.finalOutcome = outcome;
+
+        ShowFinalOutcomePanel(outcome);
+    }
+
     private void AdvancePhase() => GameManager.Instance.NextPhase();
 
     private void ShowFinalOutcomePanel(string outcome)
     {
+        PlayerPrefs.SetString("gameCompleted", "true");
+        PlayerPrefs.Save();
+
+        if (string.IsNullOrEmpty(outcome))
+        {
+            if (outcomeCanvas)
+            {
+                outcomeText.text = "Calculating your final outcome...";
+                outcomeTotalScoreText.text = "";
+                outcomeCanvas.SetActive(true);
+            }
+
+            StartCoroutine(AutoSubmitPhase7Routine());
+            return;
+        }
+
+
         if (FinalResultsUI.Instance != null)
         {
             FinalResultsUI.Instance.Show();
             return;
         }
 
-        // Fallback
-        if (outcomeCanvas == null) { Debug.Log("Final Outcome: " + outcome); return; }
+        if (outcomeCanvas == null)
+        {
+            Debug.Log("Final Outcome: " + outcome);
+            return;
+        }
 
-        if (outcomeText) outcomeText.text = outcome;
-        if (outcomeTotalScoreText)
-            outcomeTotalScoreText.text = "Final Score: " + GameManager.Instance.totalImpactScore;
+        outcomeText.text = outcome;
+        outcomeTotalScoreText.text = "Final Score: " + GameManager.Instance.totalImpactScore;
 
         if (replayButton != null)
         {

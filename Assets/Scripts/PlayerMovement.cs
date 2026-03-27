@@ -5,6 +5,13 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
 
+    // Movement boundary
+    [SerializeField] private bool useBounds = true;
+    [SerializeField] private float boundsMinX = -8f;
+    [SerializeField] private float boundsMaxX = 8f;
+    [SerializeField] private float boundsMinY = -4.5f;
+    [SerializeField] private float boundsMaxY = 4.5f;
+
     private Rigidbody2D rb;
     private Animator animator;
     private Vector2 moveInput;
@@ -27,8 +34,14 @@ public class PlayerMovement : MonoBehaviour
         {
             Vector3 mousePos = Mouse.current.position.ReadValue();
             mousePos.z = Mathf.Abs(Camera.main.transform.position.z);
-            targetPos = Camera.main.ScreenToWorldPoint(mousePos);
-            isClickMoving = true;
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(mousePos);
+
+            if (!useBounds || (worldPos.x >= boundsMinX && worldPos.x <= boundsMaxX && worldPos.y >= boundsMinY && worldPos.y <= boundsMaxY))
+            {
+                targetPos = new Vector2(Mathf.Clamp(worldPos.x, boundsMinX, boundsMaxX), Mathf.Clamp(worldPos.y, boundsMinY, boundsMaxY));
+                isClickMoving = true;
+            }
+            
         }
 
         // Determine Movement Direction
